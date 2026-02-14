@@ -37,7 +37,13 @@ const mockState: {
   storage: {
     map: string
     mission_dir: string
-    storage_dirs: Array<{ name: string; path: string; size_bytes: number; size_human: string; file_count: number }>
+    storage_dirs: Array<{
+      name: string
+      path: string
+      size_bytes: number
+      size_human: string
+      file_count: number
+    }>
     total_size_bytes: number
     total_size_human: string
   }
@@ -56,14 +62,44 @@ const mockState: {
     last_exit_code: null,
     message: 'Server running in mock mode',
     active_mods: [
-      { id: '450907', name: 'BaseBuildingPlus', url: 'https://steam.example/450907', size: '120 MB', active: true },
-      { id: '302248', name: 'CodeLock', url: 'https://steam.example/302248', size: '25 MB', active: true },
+      {
+        id: '450907',
+        name: 'BaseBuildingPlus',
+        url: 'https://steam.example/450907',
+        size: '120 MB',
+        active: true,
+      },
+      {
+        id: '302248',
+        name: 'CodeLock',
+        url: 'https://steam.example/302248',
+        size: '25 MB',
+        active: true,
+      },
     ],
   },
   mods: [
-    { id: '450907', name: 'BaseBuildingPlus', url: 'https://steam.example/450907', size: '120 MB', active: true },
-    { id: '302248', name: 'CodeLock', url: 'https://steam.example/302248', size: '25 MB', active: true },
-    { id: '778899', name: 'MassClothing', url: 'https://steam.example/778899', size: '180 MB', active: false },
+    {
+      id: '450907',
+      name: 'BaseBuildingPlus',
+      url: 'https://steam.example/450907',
+      size: '120 MB',
+      active: true,
+    },
+    {
+      id: '302248',
+      name: 'CodeLock',
+      url: 'https://steam.example/302248',
+      size: '25 MB',
+      active: true,
+    },
+    {
+      id: '778899',
+      name: 'MassClothing',
+      url: 'https://steam.example/778899',
+      size: '180 MB',
+      active: false,
+    },
   ],
   configContent: '# Example server config\nhostname = "Mock Server";\nmaxPlayers = 60;\n',
   structuredConfig: {
@@ -112,8 +148,20 @@ const mockState: {
     map: '/srv/dayz/maps',
     mission_dir: '/srv/dayz/missions',
     storage_dirs: [
-      { name: 'profiles', path: '/srv/dayz/profiles', size_bytes: 1024 * 1024 * 256, size_human: '256 MB', file_count: 1200 },
-      { name: 'logs', path: '/srv/dayz/logs', size_bytes: 1024 * 1024 * 64, size_human: '64 MB', file_count: 420 },
+      {
+        name: 'profiles',
+        path: '/srv/dayz/profiles',
+        size_bytes: 1024 * 1024 * 256,
+        size_human: '256 MB',
+        file_count: 1200,
+      },
+      {
+        name: 'logs',
+        path: '/srv/dayz/logs',
+        size_bytes: 1024 * 1024 * 64,
+        size_human: '64 MB',
+        file_count: 420,
+      },
     ],
     total_size_bytes: 1024 * 1024 * 320,
     total_size_human: '320 MB',
@@ -194,7 +242,13 @@ export async function mockRequest<T>(endpoint: string, options: RequestInit = {}
 
   if (path.startsWith('/mods/install/') && method === 'POST') {
     const modId = path.split('/').pop() ?? 'new'
-    mockState.mods.push({ id: modId, name: `Mod ${modId}`, url: `https://steam.example/${modId}`, size: '50 MB', active: false })
+    mockState.mods.push({
+      id: modId,
+      name: `Mod ${modId}`,
+      url: `https://steam.example/${modId}`,
+      size: '50 MB',
+      active: false,
+    })
     return { success: true, message: `Installed mod ${modId} (mock)` } as T
   }
 
@@ -226,17 +280,25 @@ export async function mockRequest<T>(endpoint: string, options: RequestInit = {}
   }
 
   if (path === '/config' && method === 'PUT') {
-    const body = options.body ? (JSON.parse(options.body.toString()) as { content: string }) : { content: '' }
+    const body = options.body
+      ? (JSON.parse(options.body.toString()) as { content: string })
+      : { content: '' }
     mockState.configContent = body.content
     return { success: true, message: 'Config saved (mock)' } as T
   }
 
   if (path === '/config/structured' && method === 'GET') {
-    return { success: true, message: 'Loaded (mock)', data: structuredClone(mockState.structuredConfig) } as T
+    return {
+      success: true,
+      message: 'Loaded (mock)',
+      data: structuredClone(mockState.structuredConfig),
+    } as T
   }
 
   if (path === '/config/structured' && method === 'PUT') {
-    const body = options.body ? (JSON.parse(options.body.toString()) as Record<string, unknown>) : {}
+    const body = options.body
+      ? (JSON.parse(options.body.toString()) as Record<string, unknown>)
+      : {}
     mockState.structuredConfig = { ...mockState.structuredConfig, ...body }
     return { success: true, message: 'Structured config saved (mock)' } as T
   }
@@ -247,18 +309,26 @@ export async function mockRequest<T>(endpoint: string, options: RequestInit = {}
 
   // Maps
   if (path === '/maps' && method === 'GET') {
-    return { success: true, maps: structuredClone(mockState.maps), installed_templates: ['chernarus'] } as T
+    return {
+      success: true,
+      maps: structuredClone(mockState.maps),
+      installed_templates: ['chernarus'],
+    } as T
   }
 
   if (path.startsWith('/maps/') && path.endsWith('/install') && method === 'POST') {
     const id = path.split('/')[2]
-    mockState.maps = mockState.maps.map(map => (map.workshop_id === id ? { ...map, installed: true } : map))
+    mockState.maps = mockState.maps.map(map =>
+      map.workshop_id === id ? { ...map, installed: true } : map
+    )
     return { success: true, message: `Installed map ${id} (mock)` } as T
   }
 
   if (path.match(/^\/maps\/[^/]+$/) && method === 'DELETE') {
     const id = path.split('/')[2]
-    mockState.maps = mockState.maps.map(map => (map.workshop_id === id ? { ...map, installed: false } : map))
+    mockState.maps = mockState.maps.map(map =>
+      map.workshop_id === id ? { ...map, installed: false } : map
+    )
     return { success: true, message: `Uninstalled map ${id} (mock)` } as T
   }
 
@@ -272,7 +342,15 @@ export async function mockRequest<T>(endpoint: string, options: RequestInit = {}
   if (path.startsWith('/maps/template/') && method === 'GET') {
     const template = path.split('/').pop() ?? ''
     const map = mockState.maps.find(m => m.templates.includes(template)) ?? mockState.maps[0]
-    return { success: true, map: { name: map.name, description: map.description, workshop_id: map.workshop_id, templates: map.templates } } as T
+    return {
+      success: true,
+      map: {
+        name: map.name,
+        description: map.description,
+        workshop_id: map.workshop_id,
+        templates: map.templates,
+      },
+    } as T
   }
 
   // Steam
@@ -281,7 +359,9 @@ export async function mockRequest<T>(endpoint: string, options: RequestInit = {}
   }
 
   if (path === '/steam/login' && method === 'POST') {
-    const body = options.body ? (JSON.parse(options.body.toString()) as { username: string }) : { username: '' }
+    const body = options.body
+      ? (JSON.parse(options.body.toString()) as { username: string })
+      : { username: '' }
     mockState.steam.masked_username = `${body.username}***`
     return { success: true, message: 'Steam login saved (mock)' } as T
   }

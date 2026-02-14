@@ -3,7 +3,7 @@ import type { ModListResponse, OperationResponse, ServerStatus, SteamLoginStatus
 const API_BASE = import.meta.env.VITE_API_BASE ?? '/api'
 const USE_MOCK = import.meta.env.VITE_API_MOCK === 'true'
 
-let mockRequestFn: null | (typeof import('./mocks/apiMock'))['mockRequest'] = null
+let mockRequestFn: null | typeof import('./mocks/apiMock')['mockRequest'] = null
 
 async function getMockRequest() {
   if (!mockRequestFn) {
@@ -296,9 +296,11 @@ export const api = {
     }),
 
   // Logs
-  listLogFiles: () => request<{ success: boolean; files: Array<{ name: string; path: string; size_bytes: number; size_human: string }> }>(
-    '/logs/files'
-  ),
+  listLogFiles: () =>
+    request<{
+      success: boolean
+      files: Array<{ name: string; path: string; size_bytes: number; size_human: string }>
+    }>('/logs/files'),
   getLogTail: (filename?: string, bytesCount = 20000) =>
     request<{ success: boolean; message: string; content: string }>(
       `/logs${filename ? `?filename=${encodeURIComponent(filename)}` : ''}&bytes_count=${bytesCount}`
