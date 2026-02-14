@@ -1,0 +1,300 @@
+.page {
+  max-width: 1000px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.loading,
+.error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  min-height: 400px;
+  color: var(--text-secondary);
+}
+
+.error {
+  color: var(--danger);
+}
+
+.header {
+  margin-bottom: 8px;
+}
+
+.title {
+  font-size: 28px;
+  font-weight: 800;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.subtitle {
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin-top: 4px;
+}
+
+/* Status Card */
+.statusCard {
+  padding: 24px;
+}
+
+.statusMain {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+
+.statusLeft {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.statusMessage {
+  font-size: 13px;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+}
+
+.statusControls {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+/* Stats Grid */
+.statsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+}
+
+.statCard {
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.statIcon {
+  width: 44px;
+  height: 44px;
+  background: var(--bg-tertiary);
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--accent);
+}
+
+.statContent {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.statLabel {
+  font-size: 12px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.statValue {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+}
+
+.mapDescription {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin: 4px 0 0 0;
+  font-family: var(--font-default);
+  font-weight: 400;
+}
+
+/* Mods List */
+.modsList {
+  display: flex;
+  flex-direction: column;
+}
+
+.modItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border-color);
+  color: var(--text-primary);
+  text-decoration: none;
+  transition: all var(--transition-fast);
+}
+
+.modItem:last-child {
+  border-bottom: none;
+}
+
+.modItem:hover {
+  color: var(--accent);
+}
+
+.modName {
+  font-weight: 500;
+}
+
+.modSize {
+  font-size: 13px;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+}
+
+/* Health Info */
+.healthInfo {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 24px;
+}
+
+.healthItem {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.healthLabel {
+  font-size: 12px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.healthValue {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+}
+
+.healthValue.enabled {
+  color: var(--status-running);
+}
+
+.healthValue.disabled {
+  color: var(--status-stopped);
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+  .page {
+    gap: 16px;
+  }
+
+  .title {
+    font-size: 24px;
+  }
+
+  .subtitle {
+    font-size: 12px;
+  }
+
+  .statusCard {
+    padding: 16px;
+  }
+
+  .statusMain {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+
+  .statusControls {
+    width: 100%;
+    gap: 8px;
+  }
+
+  .statusControls button {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .statsGrid {
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 12px;
+  }
+
+  .statCard {
+    padding: 12px 16px;
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .statIcon {
+    width: 40px;
+    height: 40px;
+  }
+
+  .statContent {
+    width: 100%;
+  }
+
+  .statLabel {
+    font-size: 11px;
+  }
+
+  .statValue {
+    font-size: 14px;
+  }
+
+  .healthInfo {
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .modsList {
+    max-height: 300px;
+    overflow-y: auto;
+  }
+}
+
+@media (max-width: 480px) {
+  .page {
+    gap: 12px;
+  }
+
+  .title {
+    font-size: 20px;
+  }
+
+  .statusCard {
+    padding: 12px;
+  }
+
+  .statsGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .statCard {
+    gap: 12px;
+  }
+
+  .statusControls button {
+    width: 100%;
+  }
+
+  .modSize {
+    font-size: 12px;
+  }
+
+  .modItem {
+    padding: 8px 0;
+  }
+}
+

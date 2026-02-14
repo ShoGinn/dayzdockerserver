@@ -1,0 +1,52 @@
+[project]
+dependencies = [
+    "fastapi>=0.126.0",
+    "pydantic>=2.12.5",
+    "python-multipart>=0.0.21",
+    "requests>=2.32.5",
+    "uvicorn[standard]>=0.38.0",
+]
+description = "DayZ Server Management API and Lifecycle Tools"
+name = "dayz-server"
+readme = "README.md"
+requires-python = ">=3.12"
+version = "2.0.0"
+
+[dependency-groups]
+dev = ["mypy>=1.19.1", "pytest>=9.0.2", "ruff>=0.14.10"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+ignore = [
+    "E501", # line too long (handled by formatter)
+]
+select = [
+    "A",   # flake8-builtins
+    "B",   # flake8-bugbear (find likely bugs)
+    "C4",  # flake8-comprehensions
+    "E",
+    "F",
+    "I",   # Flake8 errors, flakes, warnings, and isort
+    "SIM", # flake8-simplify
+    "UP",  # pyupgrade rules (modernize code)
+    "W",
+]
+
+[tool.ruff.format]
+indent-style = "space"
+quote-style = "double"
+
+[tool.mypy]
+check_untyped_defs = true
+disallow_incomplete_defs = true
+disallow_untyped_defs = true
+no_implicit_optional = true
+python_version = "3.12"
+strict_equality = true
+warn_redundant_casts = true
+warn_return_any = true
+warn_unused_configs = true
+warn_unused_ignores = true

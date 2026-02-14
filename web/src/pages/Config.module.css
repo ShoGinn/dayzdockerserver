@@ -1,0 +1,392 @@
+.page {
+  max-width: 1000px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.loading,
+.error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  min-height: 400px;
+  color: var(--text-secondary);
+}
+
+.error {
+  color: var(--danger);
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 8px;
+}
+
+.title {
+  font-size: 28px;
+  font-weight: 800;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.subtitle {
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin-top: 4px;
+}
+
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Mode Toggle */
+.modeToggle {
+  display: flex;
+  background: var(--bg-secondary);
+  border-radius: var(--radius-md);
+  padding: 3px;
+  margin-right: 8px;
+}
+
+.modeButton {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: 500;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.modeButton:hover {
+  color: var(--text-primary);
+}
+
+.modeButton.active {
+  background: var(--accent);
+  color: var(--bg-primary);
+}
+
+/* Warning */
+.warning {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 16px;
+  background: var(--status-warning-bg);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  border-radius: var(--radius-md);
+  color: var(--status-warning);
+  font-size: 14px;
+}
+
+.warning strong {
+  font-weight: 700;
+}
+
+/* Sections */
+.sections {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.section {
+  overflow: hidden;
+}
+
+.sectionHeader {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 14px 16px;
+  background: transparent;
+  border: none;
+  color: var(--text-primary);
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.sectionHeader:hover {
+  background: var(--bg-secondary);
+}
+
+.sectionTitle {
+  flex: 1;
+  text-align: left;
+}
+
+.sectionCount {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+.sectionContent {
+  padding: 8px 16px 16px;
+  border-top: 1px solid var(--border-color);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Fields */
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.fieldHeader {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.fieldLabel {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+}
+
+.fieldDescription {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.fieldDescription svg {
+  opacity: 0.6;
+}
+
+.fieldDescription span {
+  max-width: 400px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.fieldInput {
+  width: 100%;
+}
+
+.input,
+.select,
+.textarea {
+  width: 100%;
+  max-width: 400px;
+  padding: 10px 12px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+  font-size: 14px;
+  font-family: var(--font-mono);
+  transition: border-color 0.15s ease;
+}
+
+.input:focus,
+.select:focus,
+.textarea:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.input::placeholder {
+  color: var(--text-muted);
+  opacity: 0.6;
+}
+
+.select {
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  padding-right: 36px;
+}
+
+.textarea {
+  max-width: 100%;
+  min-height: 80px;
+  resize: vertical;
+  font-family: var(--font-mono);
+  line-height: 1.5;
+}
+
+/* Editor (Raw mode) */
+.editorCard {
+  display: flex;
+  flex-direction: column;
+}
+
+.editorHeader {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border-color);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+}
+
+.unsaved {
+  margin-left: auto;
+  color: var(--status-warning);
+  font-size: 12px;
+}
+
+.editor {
+  width: 100%;
+  min-height: 500px;
+  padding: 16px;
+  background: var(--bg-secondary);
+  border: none;
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  line-height: 1.6;
+  resize: vertical;
+}
+
+.editor:focus {
+  outline: none;
+}
+
+/* Help */
+.help {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 12px;
+}
+
+.helpItem {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.helpItem code {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--accent);
+}
+
+.helpItem span {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+  .page {
+    gap: 16px;
+  }
+
+  .title {
+    font-size: 24px;
+  }
+
+  .header {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .headerActions {
+    width: 100%;
+    justify-content: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .modeToggle {
+    margin-right: 0;
+  }
+
+  .input,
+  .select,
+  .textarea {
+    max-width: 100%;
+  }
+
+  .editor {
+    min-height: 300px;
+  }
+
+  .help {
+    grid-template-columns: 1fr;
+  }
+
+  .sectionContent {
+    padding: 8px 12px 12px;
+  }
+
+  .sectionHeader {
+    padding: 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .page {
+    gap: 12px;
+  }
+
+  .title {
+    font-size: 20px;
+  }
+
+  .subtitle {
+    font-size: 12px;
+  }
+
+  .modeButton {
+    padding: 4px 8px;
+    font-size: 12px;
+  }
+
+  .warning {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .input,
+  .select,
+  .textarea {
+    font-size: 13px;
+    padding: 8px 10px;
+  }
+
+  .editor {
+    font-size: 12px;
+    min-height: 250px;
+    padding: 12px;
+  }
+
+  .fieldLabel {
+    font-size: 12px;
+  }
+
+  .fieldDescription span {
+    white-space: normal;
+  }
+}
+

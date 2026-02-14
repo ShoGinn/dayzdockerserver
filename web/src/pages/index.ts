@@ -1,0 +1,5 @@
+export { ConfigPage } from './Config'
+export { DashboardPage } from './Dashboard'
+export { LoginPage } from './Login'
+export { ModsPage } from './Mods'
+export { SettingsPage } from './Settings'

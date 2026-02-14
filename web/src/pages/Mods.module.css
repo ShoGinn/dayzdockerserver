@@ -1,0 +1,274 @@
+.page {
+  max-width: 900px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  min-height: 400px;
+  color: var(--text-secondary);
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 8px;
+}
+
+.title {
+  font-size: 28px;
+  font-weight: 800;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.subtitle {
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin-top: 4px;
+}
+
+/* Install Form */
+.installForm {
+  display: flex;
+  gap: 12px;
+}
+
+.input {
+  flex: 1;
+  padding: 10px 14px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+  font-size: 14px;
+  font-family: var(--font-mono);
+  transition: all var(--transition-fast);
+}
+
+.input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-muted);
+}
+
+.input::placeholder {
+  color: var(--text-muted);
+}
+
+.error {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  background: var(--danger-muted);
+  border-radius: var(--radius-md);
+  color: var(--danger);
+  font-size: 14px;
+}
+
+/* Mods List */
+.modsHeader {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.modsCount {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.empty {
+  padding: 60px 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  color: var(--text-muted);
+}
+
+.empty p {
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.empty span {
+  font-size: 13px;
+}
+
+.modsList {
+  display: flex;
+  flex-direction: column;
+}
+
+.modItem {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border-color);
+  position: relative;
+  transition: background var(--transition-fast);
+}
+
+.modItem:last-child {
+  border-bottom: none;
+}
+
+.modItem:hover {
+  background: var(--bg-hover);
+}
+
+.modItem.active {
+  background: var(--accent-muted);
+}
+
+.modInfo {
+  flex: 1;
+  min-width: 0;
+}
+
+.modName {
+  display: block;
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.modMeta {
+  display: block;
+  margin-top: 4px;
+  font-size: 12px;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+}
+
+.modActions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.modLink {
+  padding: 8px;
+  color: var(--text-muted);
+  border-radius: var(--radius-sm);
+  transition: all var(--transition-fast);
+}
+
+.modLink:hover {
+  color: var(--text-primary);
+  background: var(--bg-tertiary);
+}
+
+.activeBadge {
+  position: absolute;
+  top: 8px;
+  right: 12px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--accent);
+  padding: 2px 6px;
+  background: var(--bg-card);
+  border-radius: 4px;
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+  .page {
+    gap: 16px;
+  }
+
+  .title {
+    font-size: 24px;
+  }
+
+  .header {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .installForm {
+    flex-direction: column;
+  }
+
+  .input {
+    width: 100%;
+  }
+
+  .modItem {
+    padding: 12px 16px;
+    gap: 12px;
+  }
+
+  .modName {
+    font-size: 14px;
+  }
+
+  .modItem.active {
+    background: var(--accent-muted);
+  }
+
+  .activeBadge {
+    position: static;
+    margin-top: 8px;
+    display: inline-block;
+  }
+}
+
+@media (max-width: 480px) {
+  .page {
+    gap: 12px;
+  }
+
+  .title {
+    font-size: 20px;
+  }
+
+  .subtitle {
+    font-size: 12px;
+  }
+
+  .installForm {
+    gap: 8px;
+  }
+
+  .input {
+    padding: 8px 12px;
+    font-size: 13px;
+  }
+
+  .modsHeader {
+    padding: 12px 16px;
+  }
+
+  .modItem {
+    padding: 10px 12px;
+    flex-wrap: wrap;
+  }
+
+  .modMeta {
+    font-size: 11px;
+  }
+
+  .modActions {
+    width: 100%;
+    margin-top: 8px;
+  }
+}
+

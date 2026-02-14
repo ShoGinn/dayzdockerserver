@@ -1,0 +1,128 @@
+//----------------------------------------------------------------------------
+// GENERAL SERVER SETTINGS
+//----------------------------------------------------------------------------
+hostname = "DayZ Server Name";      // Server name displayed in the browser
+description = "Join our Discord!";  // Server description. Gets displayed to users in the client server browser (max 255 chars)
+password = "";                      // Password to connect to the server
+passwordAdmin = "";                 // Password to become a server admin
+
+maxPlayers = 60;                    // Maximum amount of players. Default: 60
+enableWhitelist = 0;                // Enable/disable whitelist (value 0-1). Default: 0
+disableBanlist = false;             // Disables the usage of ban.txt. Default: false
+disablePrioritylist = false;        // Disables usage of priority.txt. Default: false
+
+verifySignatures = 2;               // Verifies .pbos against .bisign files. (only 2 is supported). Default: 2
+forceSameBuild = 1;                 // When enabled, the server will allow the connection only to clients with same the .exe revision as the server (value 0-1). Default: 1
+
+//----------------------------------------------------------------------------
+// PERSISTENCE & INSTANCE
+//----------------------------------------------------------------------------
+instanceId = 1;                     // DayZ server instance id, to identify the number of instances per box and their storage folders with persistence files. Default: 1
+storageAutoFix = 1;                 // Checks if the persistence files are corrupted and replaces corrupted ones with empty ones (value 0-1). Default: 1
+lootHistory = 1;                    // How many persistence history files should be kept by instance, number is looped over during save. Default: 1
+storeHouseStateDisabled = false;    // Disable houses/doors persistence (value true/false), usable in case of problems with persistence. Default: false
+
+//----------------------------------------------------------------------------
+// COMMUNICATION & PROTOCOL
+//----------------------------------------------------------------------------
+disableVoN = 0;                     // Enable/disable voice over network (value 0-1). Default: 0
+vonCodecQuality = 20;               // Voice over network codec quality, the higher the better (values 0-30). Default: 20
+guaranteedUpdates = 1;              // Communication protocol used with game server (use only number 1). Default: 1
+steamQueryPort = 27016;             // Defines Steam query port, should fix the issue with server not being visible in client server browser. Default: 27016
+clientPort = 2302;                  // Int value, forces the port the clients connect with. Default: 2302
+
+//----------------------------------------------------------------------------
+// GAMEPLAY & VIEW
+//----------------------------------------------------------------------------
+disable3rdPerson = 0;               // Toggles the 3rd person view for players (value 0-1). Default: 0
+disableCrosshair = 0;               // Toggles the cross-hair (value 0-1). Default: 0
+disablePersonalLight = 1;           // Disables personal light for all clients connected to server. Default: 1
+lightingConfig = 1;                 // 0 for brighter night, 1 for darker night, 2 for Sakhal-specific lighting. Default: 0
+enableCfgGameplayFile = 1;          // If enabled, this option will override many settings via cfggameplay.json. Default: 0
+
+disableRespawnDialog = 0;           // Set to 1 to disable the respawn dialog (new characters will be spawning as random). Default: 0
+respawnTime = 5;                    // Sets the respawn delay (in seconds) before the player is able to get a new character on the server, when the previous one is dead. Default: 5
+
+disableBaseDamage = 0;              // Set to 1 to disable damage/destruction of fence and watchtower. Default: 0
+disableContainerDamage = 0;         // Set to 1 to disable damage/destruction of tents, barrels, wooden crate and seachest. Default: 0
+
+defaultVisibility = 1375;           // Highest terrain render distance on server (if higher than "viewDistance=" in DayZ client profile, clientside parameter applies). Default: 1375
+defaultObjectViewDistance = 1375;   // Highest object render distance on server (if higher than "preferredObjectViewDistance=" in DayZ client profile, clientside parameter applies). Default: 1375
+
+//----------------------------------------------------------------------------
+// TIME & ACCELERATION
+//----------------------------------------------------------------------------
+serverTime = "SystemTime";          // Initial in-game time of the server. "SystemTime" means the local time of the machine. Another possibility is to set the time to some value in "YYYY/MM/DD/HH/MM" format. Default: SystemTime
+serverTimeAcceleration = 12;        // Accelerated Time - The numerical value being a multiplier (0.1-64). Thus, in case it is set to 24, time would move 24 times faster than normal. An entire day would pass in one hour. Default: 12
+serverNightTimeAcceleration = 1;    // Accelerated Night Time - The numerical value being a multiplier (0.1-64) and also multiplied by serverTimeAcceleration value. Thus, in case it is set to 4 and serverTimeAcceleration is set to 2, night time would move 8 times faster than normal. Default: 1
+serverTimePersistent = 1;           // Persistent Time (value 0-1) - The actual server time is saved to storage, so when active, the next server start will use the saved time value. Default: 0
+
+//----------------------------------------------------------------------------
+// LOGGING & ADMIN
+//----------------------------------------------------------------------------
+logFile = "server_console.log";     // Saves the server console log to a file in the folder with the other server logs.
+timeStampFormat = "Short";          // Format for timestamps in the .rpt file (value Full/Short). Default: Short
+logAverageFps = 1;                  // Logs the average server FPS (value in seconds), needs to have ''-doLogs'' launch parameter active. Default: 1
+logMemory = 1;                      // Logs the server memory usage (value in seconds), needs to have the ''-doLogs'' launch parameter active. Default: 1
+logPlayers = 1;                     // Logs the count of currently connected players (value in seconds), needs to have the ''-doLogs'' launch parameter active. Default: 1
+
+adminLogPlayerHitsOnly = 0;         // 1 - log player hits only / 0 - log all hits ( animals/infected ). Default: 0
+adminLogPlacement = 1;              // 1 - log placement action ( traps, tents ). Default: 1
+adminLogBuildActions = 1;           // 1 - log basebuilding actions ( build, dismantle, destroy ). Default: 1
+adminLogPlayerList = 1;             // 1 - log periodic player list with position every 5 minutes. Default: 1
+
+motd[] = { "Welcome to the Server", "Join our Discord" }; // Message of the day displayed in the in-game chat
+motdInterval = 300;                 // Time interval (in seconds) between each message. Default: 300
+
+//----------------------------------------------------------------------------
+// PERFORMANCE, QUEUE & NETWORK
+//----------------------------------------------------------------------------
+simulatedPlayersBatch = 20;         // Set limit of how much players can be simulated per frame (for server performance gain). Default: 20
+multithreadedReplication = 1;       // Enables multi-threaded processing of server's replication system. Number of worker threads is derived by settings of jobsystem in dayzSettings.xml. Default: 1
+speedhackDetection = 1;             // Enable speedhack detection, values 1-10 (1 strict, 10 benevolent, can be float). Default: 1
+enableDebugMonitor = 0;             // Shows info about the character using a debug window in a corner of the screen (value 0-1). Default: 0
+
+loginQueueConcurrentPlayers = 5;    // The number of players concurrently processed during the login process. Should prevent massive performance drop during connection when a lot of people are connecting at the same time. Default: 5
+loginQueueMaxPlayers = 500;         // The maximum number of players that can wait in login queue. Default: 500
+
+pingWarning = 200;                  // Set to define the ping value from which the initial yellow ping warning is triggered (value in milliseconds). Default: 200
+pingCritical = 250;                 // Set to define the ping value from which the red ping warning is triggered (value in milliseconds). Default: 250
+MaxPing = 300;                      // Set to define the ping value from which a player is kicked from the server (value in milliseconds). Default: 300
+serverFpsWarning = 15;              // Set to define the server fps value under which the initial server fps warning is triggered (minimum value is 11). Default: 15
+
+allowFilePatching = 1;              // If set to 1 it will enable connection of clients with "-filePatching" launch parameter enabled. Default: 1
+disableMultiAccountMitigation = false; // Disables multi account mitigation on consoles when true. Default: false
+
+// Network Bubble (Optimization)
+networkRangeClose = 20;             // Network bubble distance for spawn of close objects with items in them (f.i. backpacks), set in meters. Default: 20
+networkRangeNear = 150;             // Network bubble distance for spawn (despawn +10%) of near inventory items objects, set in meters. Default: 150
+networkRangeFar = 1000;             // Network bubble distance for spawn (despawn +10%) of far objects (other than inventory items), set in meters. Default: 1000
+networkRangeDistantEffect = 4000;   // Network bubble distance for spawn of effects (currently only sound effects), set in meters. Default: 4000
+
+// Bandwidth & Object Batching (Advanced)
+networkObjectBatchLogSlow = 5;      // Maximum time a bubble can take to iterate in seconds before it is logged to the console.
+networkObjectBatchEnforceBandwidthLimits = 1;   // Enables a limiter for object creation based on bandwidth statistics.
+networkObjectBatchUseEstimatedBandwidth = 0;    // If set to 0, it will use the total of the actual data sent since the last server frame.
+networkObjectBatchUseDynamicMaximumBandwidth = 1; // Determines if the bandwidth limit should be a factor of the maximum bandwidth that can be sent or a hard limit.
+networkObjectBatchBandwidthLimit = 0.8;         // The actual limit, could be a [0,1] value or a [1,inf] value depending on networkObjectBatchUseDynamicMaximumBandwidth.
+networkObjectBatchCompute = 1000;   // Number of objects in the create/destroy lists that are checked in a single server frame.
+networkObjectBatchSendCreate = 10;  // Maximum number of objects that can be sent for creation.
+networkObjectBatchSendDelete = 10;  // Maximum number of objects that can be sent for deletion.
+
+//----------------------------------------------------------------------------
+// MISSIONS
+//----------------------------------------------------------------------------
+class Missions
+{
+    class DayZ
+    {
+        template="dayzOffline.chernarusplus"; // Mission to load on server startup. <MissionName>.<TerrainName>
+        // template="dayzOffline.sakhal";     // Sakhal
+        // template="dayzOffline.enoch";      // Livonia
+        // template="empty.banov";            // Banov
+        // template="empty.deerisle";         // Deer Isle
+        // template="serverMission.Pripyat";  // Pripyat
+        // template="hardcore.namalsk";       // Hardcore Namalsk
+        // template="regular.namalsk";        // Regular Namalsk
+    };
+};
