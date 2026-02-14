@@ -21,7 +21,7 @@
 ### Prerequisites
 
 - **Python 3.12+** with `uv` package manager (https://docs.astral.sh/uv/)
-- **Node 18+ LTS** (for web frontend)
+- **Node 18+ LTS** with 'pnpm' package manager (for web frontend)
 - **Docker 20.10+** with BuildKit enabled
 - **Docker Compose 2.0+**
 

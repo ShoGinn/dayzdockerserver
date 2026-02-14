@@ -15,7 +15,7 @@ export function Card({ children, padding = 'md', className = '', ...props }: Car
 }
 
 interface CardHeaderProps {
-  title: string
+  title: string | ReactNode
   subtitle?: string
   action?: ReactNode
 }
