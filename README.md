@@ -37,11 +37,11 @@ Access the UI at `http://your-server:8081` and log in with your `API_TOKEN`.
 │                                                                         │
 │  ┌──────────┐    ┌──────────┐    ┌──────────┐    ┌──────────┐         │
 │  │   web    │    │   api    │    │  server  │    │   init   │         │
-│  │  (8081)  │───▶│  (8080)  │◄───│          │    │ (one-shot│         │
+│  │  (8081)  │───▶│  (8080)  │◄───│          │    │(one-shot)│         │
 │  │          │    │          │    │          │    │          │         │
-│  │  Nginx   │    │ FastAPI  │    │Supervisor│    │Permissions│        │
-│  │  React   │    │ REST API │    │+DayZServer│   │Volume Setup│       │
-│  │  UI      │    │          │    │          │    │          │         │
+│  │  Nginx   │    │ FastAPI  │    │Supervisor│    │Permission│         │
+│  │  React   │    │ REST API │    │+DayZSrv  │    │  Volume  │         │
+│  │  UI      │    │          │    │          │    │  Setup   │         │
 │  └──────────┘    └──────────┘    └──────────┘    └──────────┘         │
 │         │              │                │               │               │
 │         └──────────────┴────────────────┴───────────────┘               │
