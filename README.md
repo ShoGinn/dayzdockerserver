@@ -240,7 +240,7 @@ curl -X POST http://localhost:8080/server/channel \
 | Method | Endpoint | Description |
 |--------|----------|-------------|
 | GET | `/steam/status` | Check credential status |
-| POST | `/steam/login` | Set Steam username for cached sessions |
+| POST | `/steam/login` | Set Steam username (for cached credential lookups) |
 | POST | `/steam/test` | Test Steam login |
 | POST | `/steam/cached-config` | Import config.vdf (JSON body) |
 | POST | `/steam/cached-config/upload` | Import config.vdf (file upload) |
@@ -303,7 +303,7 @@ curl http://localhost:8080/maps/template/namalsk \
 
 ### Switching Maps
 
-After installing a map, edit your server config to use the new template:
+After installing a map, update your server config to use the new template and restart the server:
 
 ```bash
 # Update structured config with new template
@@ -311,6 +311,10 @@ curl -X PUT http://localhost:8080/config/structured \
   -H "Authorization: Bearer your-token" \
   -H "Content-Type: application/json" \
   -d '{"template": "namalsk"}'
+
+# Restart server to load the new map
+curl -X POST http://localhost:8080/server/restart \
+  -H "Authorization: Bearer your-token"
 ```
 
 ## Admin Operations
