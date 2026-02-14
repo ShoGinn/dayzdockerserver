@@ -6,6 +6,7 @@ import {
   Power,
   PowerOff,
   RefreshCw,
+  Search,
   Shield,
   Trash2,
   X,
@@ -30,6 +31,14 @@ export function ModsPage() {
   const [vppSuperadmins, setVppSuperadmins] = useState<string[]>([])
   const [vppLoading, setVppLoading] = useState(false)
   const [newSuperadminId, setNewSuperadminId] = useState('')
+  const [showSteamLookup, setShowSteamLookup] = useState(false)
+  const [steamLookupQuery, setSteamLookupQuery] = useState('')
+  const [steamLookupResult, setSteamLookupResult] = useState<{
+    success: boolean
+    steam64_id: string | null
+    message: string
+  } | null>(null)
+  const [steamLookupLoading, setSteamLookupLoading] = useState(false)
   const { addToast } = useToast()
 
   const fetchMods = useCallback(async () => {
@@ -154,6 +163,54 @@ export function ModsPage() {
   const handleRemoveSuperadmin = (id: string) => {
     const updated = vppSuperadmins.filter(existing => existing !== id)
     setVppSuperadminsOp.execute(updated, 'overwrite')
+  }
+
+  const handleSteamLookup = async () => {
+    const query = steamLookupQuery.trim()
+    if (!query) return
+
+    try {
+      setSteamLookupLoading(true)
+      const result = await api.resolveSteamId(query)
+      setSteamLookupResult(result)
+
+      if (result.success && result.steam64_id) {
+        // Auto-populate the input if lookup succeeded
+        setNewSuperadminId(result.steam64_id)
+      }
+    } catch (err) {
+      setSteamLookupResult({
+        success: false,
+        steam64_id: null,
+        message: err instanceof Error ? err.message : 'Lookup failed',
+      })
+    } finally {
+      setSteamLookupLoading(false)
+    }
+  }
+
+  const handleValidateSteamId = async () => {
+    const query = steamLookupQuery.trim()
+    if (!query) return
+
+    try {
+      setSteamLookupLoading(true)
+      const result = await api.validateSteamId(query)
+      setSteamLookupResult(result)
+
+      if (result.success && result.steam64_id) {
+        // Auto-populate the input if valid
+        setNewSuperadminId(result.steam64_id)
+      }
+    } catch (err) {
+      setSteamLookupResult({
+        success: false,
+        steam64_id: null,
+        message: err instanceof Error ? err.message : 'Validation failed',
+      })
+    } finally {
+      setSteamLookupLoading(false)
+    }
   }
 
   if (isLoading) {
@@ -323,9 +380,11 @@ export function ModsPage() {
                   style={{
                     flex: 1,
                     padding: '8px 12px',
-                    border: '1px solid #ccc',
+                    border: '1px solid var(--border-color)',
                     borderRadius: '4px',
                     fontSize: '14px',
+                    backgroundColor: 'var(--bg-secondary)',
+                    color: 'var(--text-primary)',
                   }}
                   onKeyDown={e => e.key === 'Enter' && handleAddSuperadmin()}
                 />
@@ -337,7 +396,92 @@ export function ModsPage() {
                 >
                   Add
                 </Button>
+                <Button
+                  onClick={() => setShowSteamLookup(!showSteamLookup)}
+                  variant="secondary"
+                  icon={<Search size={16} />}
+                  size="sm"
+                  title="Look up Steam username"
+                >
+                  Lookup
+                </Button>
               </div>
+
+              {/* Steam ID Lookup Section */}
+              {showSteamLookup && (
+                <div
+                  style={{
+                    padding: '12px 16px',
+                    backgroundColor: 'var(--bg-secondary)',
+                    borderRadius: 'var(--radius-md)',
+                    border: '1px solid var(--border-color)',
+                    marginBottom: '12px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '8px',
+                  }}
+                >
+                  <p style={{ fontSize: '12px', color: 'var(--text-muted)', margin: '0 0 8px 0' }}>
+                    Enter a Steam username, profile URL, or Steam64 ID
+                  </p>
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    <input
+                      type="text"
+                      value={steamLookupQuery}
+                      onChange={e => setSteamLookupQuery(e.target.value)}
+                      placeholder="e.g., SteamName, steamid.io/player, or 76561198..."
+                      style={{
+                        flex: 1,
+                        padding: '8px 12px',
+                        border: '1px solid var(--border-color)',
+                        borderRadius: '4px',
+                        fontSize: '14px',
+                        backgroundColor: 'var(--bg-primary)',
+                        color: 'var(--text-primary)',
+                      }}
+                      onKeyDown={e => e.key === 'Enter' && handleSteamLookup()}
+                    />
+                    <Button
+                      onClick={handleSteamLookup}
+                      isLoading={steamLookupLoading}
+                      icon={<Search size={16} />}
+                      size="sm"
+                    >
+                      Search
+                    </Button>
+                    <Button
+                      onClick={handleValidateSteamId}
+                      isLoading={steamLookupLoading}
+                      variant="secondary"
+                      size="sm"
+                    >
+                      Validate
+                    </Button>
+                  </div>
+
+                  {steamLookupResult && (
+                    <div
+                      style={{
+                        padding: '8px 12px',
+                        backgroundColor: steamLookupResult.success
+                          ? 'rgba(34, 197, 94, 0.1)'
+                          : 'rgba(239, 68, 68, 0.1)',
+                        border: `1px solid ${steamLookupResult.success ? 'rgba(34, 197, 94, 0.5)' : 'rgba(239, 68, 68, 0.5)'}`,
+                        borderRadius: '4px',
+                        fontSize: '14px',
+                        color: steamLookupResult.success ? 'var(--success)' : 'var(--danger)',
+                      }}
+                    >
+                      {steamLookupResult.message}
+                      {steamLookupResult.success && steamLookupResult.steam64_id && (
+                        <div style={{ marginTop: '4px', fontSize: '12px', fontWeight: '600' }}>
+                          ID: {steamLookupResult.steam64_id}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
 
               {/* Superadmins List */}
               {vppLoading ? (

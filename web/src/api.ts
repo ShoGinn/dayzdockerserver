@@ -324,6 +324,22 @@ export const api = {
       method: 'POST',
       body: JSON.stringify({ password }),
     }),
+  resolveSteamId: (query: string) =>
+    request<{ success: boolean; steam64_id: string | null; message: string }>(
+      '/vpp/steam-id/resolve',
+      {
+        method: 'POST',
+        body: JSON.stringify({ query }),
+      }
+    ),
+  validateSteamId: (query: string) =>
+    request<{ success: boolean; steam64_id: string | null; message: string }>(
+      '/vpp/steam-id/validate',
+      {
+        method: 'POST',
+        body: JSON.stringify({ query }),
+      }
+    ),
 }
 
 export { ApiError }

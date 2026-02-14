@@ -3,7 +3,7 @@
 Helpers to manage VPPAdminTools configuration files under the profiles directory.
 """
 
-from enum import Enum
+from enum import StrEnum
 from pathlib import Path
 from typing import Any
 
@@ -24,7 +24,7 @@ class VPPPasswordRequest(BaseModel):
     password: str = Field(min_length=1)
 
 
-class VPPMode(str, Enum):
+class VPPMode(StrEnum):
     OVERWRITE = "overwrite"
     ADD = "add"
 
@@ -68,6 +68,20 @@ class VPPSuperAdminsResponse(BaseModel):
     """VPP superadmin list response."""
 
     steam64_ids: list[str]
+
+
+class VPPSteamIdLookupRequest(BaseModel):
+    """Request to resolve Steam username or ID."""
+
+    query: str = Field(min_length=1, description="Steam username or profile URL")
+
+
+class VPPSteamIdLookupResponse(BaseModel):
+    """Response from Steam ID lookup."""
+
+    success: bool
+    steam64_id: str | None = None
+    message: str
 
 
 def _ensure_parent(path: Path) -> None:

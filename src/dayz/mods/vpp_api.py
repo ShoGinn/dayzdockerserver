@@ -15,6 +15,7 @@ from fastapi.openapi.utils import get_openapi
 
 from dayz.config.models import OperationResponse
 from dayz.mods import vpp
+from dayz.utils.steam_id import resolve_username_to_steam64, validate_steam64_id
 
 APP_ID = 1828439124  # VPP Admin Tools Workshop ID
 
@@ -87,6 +88,43 @@ def build_router(verify_token: Callable[..., bool]) -> APIRouter:
         if not success:
             raise HTTPException(status_code=400, detail=result)
         return vpp.VPPSuperAdminsResponse(steam64_ids=cast(list[str], result))
+
+    @router.post(
+        "/vpp/steam-id/resolve",
+        response_model=vpp.VPPSteamIdLookupResponse,
+    )
+    async def resolve_steam_username(  # noqa: D401
+        payload: vpp.VPPSteamIdLookupRequest,
+        _auth: bool = Depends(verify_token),
+    ) -> vpp.VPPSteamIdLookupResponse:
+        """Resolve Steam username or profile URL to Steam64 ID.
+
+        This endpoint is accessible without VPP installed to help users
+        find Steam IDs for configuration purposes.
+        """
+        success, steam64, message = resolve_username_to_steam64(payload.query)
+        return vpp.VPPSteamIdLookupResponse(success=success, steam64_id=steam64, message=message)
+
+    @router.post(
+        "/vpp/steam-id/validate",
+        response_model=vpp.VPPSteamIdLookupResponse,
+    )
+    async def validate_steam_id(  # noqa: D401
+        payload: vpp.VPPSteamIdLookupRequest,
+        _auth: bool = Depends(verify_token),
+    ) -> vpp.VPPSteamIdLookupResponse:
+        """Validate a Steam64 ID format.
+
+        This endpoint is accessible without VPP installed to help users
+        validate Steam IDs.
+        """
+        is_valid, message = validate_steam64_id(payload.query)
+        # For validation, we return the input as steam64_id if valid
+        return vpp.VPPSteamIdLookupResponse(
+            success=is_valid,
+            steam64_id=payload.query.strip() if is_valid else None,
+            message=message,
+        )
 
     return router
 
