@@ -62,3 +62,7 @@ export interface SteamLoginStatus {
   masked_username: string | null
   note: string | null
 }
+
+export interface VPPSuperAdminsResponse {
+  steam64_ids: string[]
+}

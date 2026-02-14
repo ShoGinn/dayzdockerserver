@@ -64,6 +64,12 @@ class VPPSuperAdminsRequest(BaseModel):
         return normalized
 
 
+class VPPSuperAdminsResponse(BaseModel):
+    """VPP superadmin list response."""
+
+    steam64_ids: list[str]
+
+
 def _ensure_parent(path: Path) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
 
@@ -116,3 +122,22 @@ def set_superadmins(
         return True, f"Set {len(final)} superadmin(s)"
     except OSError as e:
         return False, f"Failed to write superadmins: {e}"
+
+
+def get_superadmins() -> tuple[bool, list[str] | str]:
+    """Get VPP superadmin Steam64 IDs.
+
+    Reads from `profiles/VPPAdminTools/Permissions/SuperAdmins/SuperAdmins.txt`.
+
+    Returns:
+        Tuple of (success: bool, result: list[str] | error_message: str)
+    """
+    try:
+        if not SUPERADMINS_PATH.exists():
+            return True, []
+
+        lines = SUPERADMINS_PATH.read_text(encoding="utf-8").splitlines()
+        steam_ids = [line.strip() for line in lines if line.strip().isdigit()]
+        return True, steam_ids
+    except OSError as e:
+        return False, f"Failed to read superadmins: {e}"

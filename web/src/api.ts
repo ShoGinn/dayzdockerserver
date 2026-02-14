@@ -1,4 +1,10 @@
-import type { ModListResponse, OperationResponse, ServerStatus, SteamLoginStatus } from './types'
+import type {
+  ModListResponse,
+  OperationResponse,
+  ServerStatus,
+  SteamLoginStatus,
+  VPPSuperAdminsResponse,
+} from './types'
 
 const API_BASE = import.meta.env.VITE_API_BASE ?? '/api'
 const USE_MOCK = import.meta.env.VITE_API_MOCK === 'true'
@@ -305,6 +311,19 @@ export const api = {
     request<{ success: boolean; message: string; content: string }>(
       `/logs${filename ? `?filename=${encodeURIComponent(filename)}` : ''}&bytes_count=${bytesCount}`
     ),
+
+  // VPP Admin Tools
+  getVppSuperadmins: () => request<VPPSuperAdminsResponse>('/vpp/superadmins'),
+  setVppSuperadmins: (steam64_ids: string[], mode: 'overwrite' | 'add' = 'overwrite') =>
+    request<OperationResponse>('/vpp/superadmins', {
+      method: 'POST',
+      body: JSON.stringify({ steam64_ids, mode }),
+    }),
+  setVppPassword: (password: string) =>
+    request<OperationResponse>('/vpp/password', {
+      method: 'POST',
+      body: JSON.stringify({ password }),
+    }),
 }
 
 export { ApiError }

@@ -6,7 +6,9 @@ import {
   Power,
   PowerOff,
   RefreshCw,
+  Shield,
   Trash2,
+  X,
 } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
 import { api } from '../api'
@@ -17,17 +19,24 @@ import { useOperation } from '../hooks/useOperation'
 import type { ModInfo } from '../types'
 import styles from './Mods.module.css'
 
+const VPP_MOD_ID = '1828439124'
+
 export function ModsPage() {
   const [mods, setMods] = useState<ModInfo[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [newModId, setNewModId] = useState('')
+  const [vppInstalled, setVppInstalled] = useState(false)
+  const [vppSuperadmins, setVppSuperadmins] = useState<string[]>([])
+  const [vppLoading, setVppLoading] = useState(false)
+  const [newSuperadminId, setNewSuperadminId] = useState('')
   const { addToast } = useToast()
 
   const fetchMods = useCallback(async () => {
     try {
       const response = await api.getMods()
       setMods(response.mods)
+      setVppInstalled(response.mods.some(m => m.id === VPP_MOD_ID))
       setError(null)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load mods')
@@ -36,9 +45,27 @@ export function ModsPage() {
     }
   }, [])
 
+  const fetchVppSuperadmins = useCallback(async () => {
+    if (!vppInstalled) return
+    try {
+      setVppLoading(true)
+      const response = await api.getVppSuperadmins()
+      setVppSuperadmins(response.steam64_ids)
+    } catch (err) {
+      console.error('Failed to load VPP superadmins:', err)
+      // Silently fail - VPP might not be fully configured
+    } finally {
+      setVppLoading(false)
+    }
+  }, [vppInstalled])
+
   useEffect(() => {
     fetchMods()
   }, [fetchMods])
+
+  useEffect(() => {
+    fetchVppSuperadmins()
+  }, [fetchVppSuperadmins])
 
   const installOp = useOperation(api.installMod, {
     onSuccess: () => {
@@ -81,6 +108,15 @@ export function ModsPage() {
     onError: err => addToast('error', err),
   })
 
+  const setVppSuperadminsOp = useOperation(api.setVppSuperadmins, {
+    onSuccess: () => {
+      addToast('success', 'Superadmins updated')
+      fetchVppSuperadmins()
+      setNewSuperadminId('')
+    },
+    onError: err => addToast('error', err),
+  })
+
   const handleInstall = () => {
     const modId = newModId.trim()
     if (!modId) return
@@ -95,6 +131,29 @@ export function ModsPage() {
     }
 
     installOp.execute(id)
+  }
+
+  const handleAddSuperadmin = () => {
+    const id = newSuperadminId.trim()
+    if (!id) return
+
+    if (!/^\d+$/.test(id)) {
+      addToast('error', 'Invalid Steam64 ID. Must be a number.')
+      return
+    }
+
+    if (vppSuperadmins.includes(id)) {
+      addToast('error', 'This Steam64 ID is already a superadmin')
+      return
+    }
+
+    const updated = [...vppSuperadmins, id]
+    setVppSuperadminsOp.execute(updated, 'overwrite')
+  }
+
+  const handleRemoveSuperadmin = (id: string) => {
+    const updated = vppSuperadmins.filter(existing => existing !== id)
+    setVppSuperadminsOp.execute(updated, 'overwrite')
   }
 
   if (isLoading) {
@@ -228,6 +287,106 @@ export function ModsPage() {
           </div>
         )}
       </Card>
+
+      {/* VPP Admin Tools Settings */}
+      {vppInstalled && (
+        <Card>
+          <CardHeader
+            title={
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Shield size={20} />
+                VPP Admin Tools
+              </div>
+            }
+            subtitle="Manage server administrators"
+          />
+          <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            {/* Superadmins Section */}
+            <div>
+              <h3 style={{ marginBottom: '8px', fontSize: '14px', fontWeight: '600' }}>
+                Superadmins
+              </h3>
+
+              {/* Add New Superadmin */}
+              <div
+                style={{
+                  display: 'flex',
+                  gap: '8px',
+                  marginBottom: '12px',
+                }}
+              >
+                <input
+                  type="text"
+                  value={newSuperadminId}
+                  onChange={e => setNewSuperadminId(e.target.value)}
+                  placeholder="Enter Steam64 ID"
+                  style={{
+                    flex: 1,
+                    padding: '8px 12px',
+                    border: '1px solid #ccc',
+                    borderRadius: '4px',
+                    fontSize: '14px',
+                  }}
+                  onKeyDown={e => e.key === 'Enter' && handleAddSuperadmin()}
+                />
+                <Button
+                  onClick={handleAddSuperadmin}
+                  isLoading={setVppSuperadminsOp.isLoading}
+                  icon={<Plus size={16} />}
+                  size="sm"
+                >
+                  Add
+                </Button>
+              </div>
+
+              {/* Superadmins List */}
+              {vppLoading ? (
+                <div style={{ textAlign: 'center', padding: '16px', color: '#666' }}>
+                  <RefreshCw size={16} className="animate-spin" />
+                </div>
+              ) : vppSuperadmins.length === 0 ? (
+                <div style={{ padding: '12px', textAlign: 'center', color: '#999' }}>
+                  No superadmins configured
+                </div>
+              ) : (
+                <div
+                  style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '8px',
+                  }}
+                >
+                  {vppSuperadmins.map(id => (
+                    <div
+                      key={id}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        padding: '8px 12px',
+                        backgroundColor: '#f5f5f5',
+                        borderRadius: '4px',
+                        fontSize: '14px',
+                      }}
+                    >
+                      <span>{id}</span>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleRemoveSuperadmin(id)}
+                        isLoading={setVppSuperadminsOp.isLoading}
+                        title="Remove superadmin"
+                      >
+                        <X size={16} />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </Card>
+      )}
     </div>
   )
 }

@@ -8,6 +8,7 @@ plug-and-play from dayz.services.api.
 from __future__ import annotations
 
 from collections.abc import Callable
+from typing import cast
 
 from fastapi import APIRouter, Depends, FastAPI, HTTPException, Request
 from fastapi.openapi.utils import get_openapi
@@ -72,6 +73,20 @@ def build_router(verify_token: Callable[..., bool]) -> APIRouter:
         if not success:
             raise HTTPException(status_code=400, detail=message)
         return OperationResponse(success=True, message=message)
+
+    @router.get(
+        "/vpp/superadmins",
+        response_model=vpp.VPPSuperAdminsResponse,
+        dependencies=[Depends(require_vpp_installed)],
+    )
+    async def get_vpp_superadmins(  # noqa: D401
+        _auth: bool = Depends(verify_token),
+    ) -> vpp.VPPSuperAdminsResponse:
+        """Get VPPAdminTools superadmin Steam64 IDs."""
+        success, result = vpp.get_superadmins()
+        if not success:
+            raise HTTPException(status_code=400, detail=result)
+        return vpp.VPPSuperAdminsResponse(steam64_ids=cast(list[str], result))
 
     return router
 
