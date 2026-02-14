@@ -353,20 +353,25 @@ export function ModsPage() {
                   style={{
                     display: 'flex',
                     flexDirection: 'column',
-                    gap: '8px',
+                    gap: '0px',
                   }}
                 >
-                  {vppSuperadmins.map(id => (
+                  {vppSuperadmins.map((id, index) => (
                     <div
                       key={id}
                       style={{
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'space-between',
-                        padding: '8px 12px',
-                        backgroundColor: '#f5f5f5',
-                        borderRadius: '4px',
+                        padding: '12px 16px',
+                        backgroundColor: 'var(--bg-secondary)',
+                        borderBottom:
+                          index < vppSuperadmins.length - 1
+                            ? '1px solid var(--border-color)'
+                            : 'none',
                         fontSize: '14px',
+                        color: 'var(--text-primary)',
+                        fontFamily: 'var(--font-mono)',
                       }}
                     >
                       <span>{id}</span>
