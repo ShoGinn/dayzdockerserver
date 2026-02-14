@@ -9,7 +9,7 @@ Also thanks for the ideas and some of the code at: https://ceregatti.org/git/dan
 ## Features
 
 - **Web UI** - Easy-to-use dashboard for server management
-- **Ubuntu 22.04 LTS** base image for stability and compatibility
+- **Ubuntu 24.04 LTS** base image for stability and compatibility
 - **SteamCMD** installed directly from Valve (auto-updates)
 - **Robust supervisor** with crash recovery and exponential backoff
 - **REST API** for all management operations
@@ -91,18 +91,21 @@ This design is orchestration-agnostic and works with Docker Compose, Kubernetes,
    
    # Then set the username via API
    curl -X POST http://localhost:8080/steam/login \
+     -H "Authorization: Bearer your-secret-token" \
      -H "Content-Type: application/json" \
      -d '{"username": "YOUR_USERNAME"}'
    ```
 
 4. **Install the server:**
    ```bash
-   curl -X POST http://localhost:8080/server/install
+   curl -X POST http://localhost:8080/server/install \
+     -H "Authorization: Bearer your-secret-token"
    ```
 
 5. **Start the server:**
    ```bash
-   curl -X POST http://localhost:8080/server/start
+   curl -X POST http://localhost:8080/server/start \
+     -H "Authorization: Bearer your-secret-token"
    ```
 
 ## Configuration
@@ -286,14 +289,16 @@ The system supports official DayZ maps (Chernarus, Livonia) and community maps (
 
 ```bash
 # List available maps
-curl http://localhost:8080/maps
+curl http://localhost:8080/maps \
+  -H "Authorization: Bearer your-token"
 
 # Install a map (e.g., Namalsk - workshop ID 2289456201)
 curl -X POST http://localhost:8080/maps/2289456201/install \
   -H "Authorization: Bearer your-token"
 
 # Check installed template
-curl http://localhost:8080/maps/template/namalsk
+curl http://localhost:8080/maps/template/namalsk \
+  -H "Authorization: Bearer your-token"
 ```
 
 ### Switching Maps
@@ -316,7 +321,8 @@ Wipe player data, world state, or specific storage directories without losing mo
 
 ```bash
 # Check storage info
-curl http://localhost:8080/admin/storage
+curl http://localhost:8080/admin/storage \
+  -H "Authorization: Bearer your-token"
 
 # Wipe all player/world storage
 curl -X DELETE http://localhost:8080/admin/storage \
@@ -333,7 +339,8 @@ Remove core dumps, crash dumps, old logs, and temporary files:
 
 ```bash
 # Check what can be cleaned
-curl http://localhost:8080/admin/cleanup
+curl http://localhost:8080/admin/cleanup \
+  -H "Authorization: Bearer your-token"
 
 # Clean all (core dumps, crash dumps, logs, temp files)
 curl -X POST http://localhost:8080/admin/cleanup \
@@ -361,10 +368,12 @@ Get the last N bytes of a log file:
 
 ```bash
 # Default: last 20KB
-curl http://localhost:8080/logs?file=script.log
+curl http://localhost:8080/logs?file=script.log \
+  -H "Authorization: Bearer your-token"
 
 # Get last 50KB
-curl "http://localhost:8080/logs?file=script.log&bytes_count=51200"
+curl "http://localhost:8080/logs?file=script.log&bytes_count=51200" \
+  -H "Authorization: Bearer your-token"
 ```
 
 ### Real-time Streaming
