@@ -16,53 +16,14 @@ import re
 import requests
 
 
-def _try_api_lookup(query: str) -> tuple[bool, str | None, str]:
-    """Try looking up via SteamID.io API (limited support).
-
-    Returns:
-        Tuple of (success: bool, steam64_id: str | None, message: str)
-    """
-    try:
-        # Try direct API endpoint (may not work for all queries)
-        response = requests.get(
-            "https://steamid.io/api/lookup/",
-            params={"input": query},
-            timeout=5,
-            headers={"User-Agent": "DayZ-Server-Manager"},
-        )
-        response.raise_for_status()
-
-        # The API response is likely JSON or has specific format
-        text = response.text
-
-        # Try to find Steam64 ID in various formats
-        patterns = [
-            r'"steamid64"\s*:\s*"?(\d{17})"?',
-            r'<span\s+id=["\']?steamid64["\']?\s*>\s*(\d{17})\s*</span>',
-            r'href="https://steamid\.io/lookup/(\d{17})"',
-            r'data-steamid64="(\d{17})"',
-        ]
-
-        for pattern in patterns:
-            match = re.search(pattern, text)
-            if match:
-                steam64 = match.group(1)
-                return True, steam64, f"API resolved to Steam64 ID: {steam64}"
-
-        return False, None, "API lookup completed but could not extract Steam64 ID"
-
-    except Exception as e:
-        return False, None, f"API lookup failed: {str(e)}"
-
-
 def resolve_username_to_steam64(username: str) -> tuple[bool, str | None, str]:
     """Resolve a Steam username to a Steam64 ID.
 
     Supports:
     - Direct Steam64 IDs (extracts from URLs or validates raw ID)
-    - Profile URLs with Steam64 ID (extracts directly)
-    - Vanity URLs (attempts API lookup with limitations)
-    - Usernames (attempts API lookup with limitations)
+    - Profile URLs with Steam64 ID (extracts directly from /profiles/...)
+    - Vanity URLs (cannot auto-resolve without Steam API key)
+    - Usernames (cannot auto-resolve without Steam API key)
 
     Args:
         username: Steam community username, Steam64 ID, or profile URL
@@ -92,27 +53,23 @@ def resolve_username_to_steam64(username: str) -> tuple[bool, str | None, str]:
                 return True, username, f"Valid Steam64 ID: {username}"
             return False, None, message
 
-        # Pattern 3: Extract vanity URL from Steam community URL
+        # Pattern 3: Vanity URL or username - requires Steam API key
+        # Extract vanity name for error message
         vanity_match = re.search(r"steamcommunity\.com/id/([a-zA-Z0-9_-]+)", username)
         vanity_name = vanity_match.group(1) if vanity_match else username.split("/")[-1].rstrip("/")
 
-        # Try API lookup for vanity URLs
-        success, steam64, api_message = _try_api_lookup(username)
-        if success and steam64:
-            return True, steam64, api_message
-
-        # Provide helpful message for vanity URL failures
+        # Cannot resolve vanity URLs without Steam Web API key
         return (
             False,
             None,
-            f"Could not resolve vanity URL '{vanity_name}'. "
-            f"Tip: You can find your Steam64 ID by visiting your Steam profile, "
-            f"right-clicking, selecting 'View Page Source', and searching for a 17-digit number starting with 7656119. "
-            f"Then paste that number directly.",
+            f"Cannot resolve vanity URL '{vanity_name}' without Steam API access. "
+            f"To find your Steam64 ID: Visit your Steam profile, look at the URL. "
+            f"If it shows /profiles/76561199..., that number is your Steam64 ID. "
+            f"If it shows /id/{vanity_name}/, visit the actual page and right-click > View Source, then search for a 17-digit number starting with 7656119.",
         )
 
     except requests.RequestException as e:
-        return False, None, f"Network error resolving username: {str(e)}"
+        return False, None, f"Network error: {str(e)}"
     except Exception as e:
         return False, None, f"Unexpected error: {str(e)}"
 
