@@ -397,7 +397,17 @@ export function ModsPage() {
                   Add
                 </Button>
                 <Button
-                  onClick={() => setShowSteamLookup(!showSteamLookup)}
+                  onClick={() => {
+                    if (!showSteamLookup) {
+                      // Opening panel - clear previous state
+                      setSteamLookupQuery('')
+                      setSteamLookupResult(null)
+                    } else {
+                      // Closing panel - clear result
+                      setSteamLookupResult(null)
+                    }
+                    setShowSteamLookup(!showSteamLookup)
+                  }}
                   variant="secondary"
                   icon={<Search size={16} />}
                   size="sm"
