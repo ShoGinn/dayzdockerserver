@@ -20,8 +20,8 @@
 
 ### Prerequisites
 
-- **Python 3.12+** with `uv` package manager (https://docs.astral.sh/uv/)
-- **Node 18+ LTS** with 'pnpm' package manager (for web frontend)
+- **Python 3.12+** with `uv` package manager (https://docs.astral.sh/uv/) — **REQUIRED** for all Python operations
+- **Node 18+ LTS** with `pnpm` package manager (https://pnpm.io/) — **REQUIRED** for frontend work
 - **Docker 20.10+** with BuildKit enabled
 - **Docker Compose 2.0+**
 
@@ -30,35 +30,35 @@
 **1. Bootstrap Environment**
 
 ```bash
-# Install Python dependencies (creates virtual env in .venv)
+# Install Python dependencies using uv (DO NOT use .venv manually)
 cd /Users/scottginn/Coding/dayzdockerserver
-uv pip install -e ".[dev]"
+uv sync  # Installs deps + dev tools into uv's managed environment
 
-# Install frontend dependencies
-cd web && npm install && cd ..
+# Install frontend dependencies using pnpm
+cd web && pnpm install && cd ..
 ```
 
 **2. Lint Code**
 
 ```bash
-# Backend Python linting (100 char line limit, strict rules)
-ruff check src/
+# Backend Python linting (100 char line limit, strict rules) — run via uv
+uv run ruff check src/
 
-# Backend Python formatting (auto-fix)
-ruff format src/
+# Backend Python formatting (auto-fix) — run via uv
+uv run ruff format src/
 
-# Frontend TypeScript/CSS linting
-cd web && npm run lint:check && cd ..
+# Frontend TypeScript/CSS linting — use pnpm
+cd web && pnpm lint:check && cd ..
 
-# Frontend auto-formatting
-cd web && npm run lint && cd ..
+# Frontend auto-formatting — use pnpm
+cd web && pnpm lint && cd ..
 ```
 
 **3. Type Checking**
 
 ```bash
-# Backend (STRICT MODE - required for all new code)
-mypy src/
+# Backend (STRICT MODE - required for all new code) — run via uv
+uv run mypy src/
 # Error: disallow_untyped_defs = True, check_untyped_defs = True
 # All functions must have explicit type annotations
 ```
@@ -84,11 +84,11 @@ docker compose up -d
 # View logs
 docker compose logs -f api server web
 
-# For frontend-only development (requires running API container)
-cd web && npm run dev  # HMR on http://localhost:3000, proxies /api to :8080
+# For frontend-only development (requires running API container) — use pnpm
+cd web && pnpm dev  # HMR on http://localhost:3000, proxies /api to :8080
 
-# For frontend with mock API (no backend needed)
-cd web && VITE_API_MOCK=true npm run dev
+# For frontend with mock API (no backend needed) — use pnpm
+cd web && VITE_API_MOCK=true pnpm dev
 ```
 
 **6. Environment Configuration**
@@ -161,9 +161,9 @@ cp .env.example .env.local
 **To validate locally before pushing:**
 
 ```bash
-ruff check src/ && ruff format src/
-mypy src/
-cd web && npm run lint:check && npm run build && cd ..
+uv run ruff check src/ && uv run ruff format src/
+uv run mypy src/
+cd web && pnpm lint:check && pnpm build && cd ..
 docker compose build
 ```
 
@@ -242,7 +242,7 @@ docker compose build
 
 **11. Frontend Mock API**
 
-- Set `VITE_API_MOCK=true` environment variable to run frontend without backend
+- Set `VITE_API_MOCK=true` environment variable when running `pnpm dev` to run frontend without backend
 - Useful for UI-only development and prototyping
 - Mock responses in `/web/src/mocks/`
 
