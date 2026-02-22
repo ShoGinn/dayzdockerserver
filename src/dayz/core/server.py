@@ -672,29 +672,48 @@ class ServerManager:
     # Logs
     # =========================================================================
 
+    @staticmethod
+    def _classify_log_file(name: str) -> str:
+        """Classify a log file by its filename pattern."""
+        lower = name.lower()
+        if lower.startswith("crash_") and lower.endswith(".log"):
+            return "crash"
+        if lower.endswith(".rpt"):
+            return "rpt"
+        if lower.startswith("script_") and lower.endswith(".log"):
+            return "script"
+        if lower == "error.log":
+            return "error"
+        if lower == "server_console.log":
+            return "console"
+        return "other"
+
     def list_log_files(self) -> list[dict]:
-        """List available log-like files in profiles"""
+        """List available log-like files in profiles, sorted by modified descending"""
         if not PROFILES_DIR.exists():
             return []
 
-        log_files = (
+        log_files = [
             item
             for item in PROFILES_DIR.iterdir()
             if item.is_file() and item.suffix.lower() in (".log", ".rpt", ".adm")
-        )
+        ]
 
-        return sorted(
-            (
+        results = []
+        for item in log_files:
+            stat = item.stat()
+            results.append(
                 {
                     "name": item.name,
                     "path": str(item),
-                    "size_bytes": (size := item.stat().st_size),
-                    "size_human": human_size(size),
+                    "size_bytes": stat.st_size,
+                    "size_human": human_size(stat.st_size),
+                    "modified": datetime.fromtimestamp(stat.st_mtime).isoformat(),
+                    "category": self._classify_log_file(item.name),
                 }
-                for item in log_files
-            ),
-            key=lambda f: f["name"],
-        )
+            )
+
+        return sorted(results, key=lambda f: f["modified"], reverse=True)
 
     def read_log_tail(
         self, filename: str | None = None, bytes_count: int = 20000

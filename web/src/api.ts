@@ -305,7 +305,14 @@ export const api = {
   listLogFiles: () =>
     request<{
       success: boolean
-      files: Array<{ name: string; path: string; size_bytes: number; size_human: string }>
+      files: Array<{
+        name: string
+        path: string
+        size_bytes: number
+        size_human: string
+        modified: string
+        category: string
+      }>
     }>('/logs/files'),
   getLogTail: (filename?: string, bytesCount = 20000) =>
     request<{ success: boolean; message: string; content: string }>(
