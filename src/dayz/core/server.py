@@ -6,6 +6,7 @@ Updated to use Unix socket communication instead of control files.
 
 import contextlib
 import json
+import logging
 import re
 import shutil
 import subprocess
@@ -47,6 +48,8 @@ from dayz.services.supervisor import DayZSupervisorClient
 from dayz.utils.file_utils import categorize_cleanup_file, format_uptime, get_dir_size, human_size
 from dayz.utils.server_version import extract_dayz_version
 from dayz.utils.text_utils import extract_template_from_config, mask_password_in_config
+
+logger = logging.getLogger(__name__)
 
 
 class ServerControl:
@@ -478,7 +481,7 @@ class ServerManager:
                 return
             except Exception as e:
                 # If JSON is invalid, fall through to SOURCE_CFG fallback
-                print(f"Warning: Failed to load structured config: {e}")
+                logger.warning("Failed to load structured config: %s", e)
 
         if SOURCE_CFG.exists():
             PROFILES_DIR.mkdir(parents=True, exist_ok=True)
@@ -490,7 +493,7 @@ class ServerManager:
             default_config = ServerConfig()
             self.save_server_config(default_config)
         except Exception as e:
-            print(f"Warning: Failed to create default config: {e}")
+            logger.warning("Failed to create default config: %s", e)
 
     def get_config(self, mask_secrets: bool = True) -> tuple[bool, str, str | None]:
         """Read current server config"""

@@ -48,6 +48,7 @@ from dayz.mods import vpp_api
 
 API_TOKEN = os.getenv("API_TOKEN", "")
 API_AUTH_DISABLED = os.getenv("API_AUTH_DISABLED", "").lower() in ("1", "true", "yes")
+CORS_ORIGINS = os.getenv("CORS_ORIGINS", "").split(",") if os.getenv("CORS_ORIGINS") else []
 
 security = HTTPBearer(auto_error=False)
 
@@ -92,7 +93,7 @@ FILE_REQUIRED = File(...)
 # CORS for web UI
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Configure appropriately for production
+    allow_origins=CORS_ORIGINS or ["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

@@ -115,6 +115,11 @@ services:
     labels:
       com.dayz.service: "api"
       com.dayz.description: "Management API server"
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
     deploy:
       resources:
         limits:
@@ -180,12 +185,11 @@ services:
           cpus: ${SERVER_CPU_LIMIT:-4}
         reservations:
           memory: ${SERVER_MEMORY_RESERVE:-4g}
-    # Optional: Logging configuration
-    # logging:
-    #   driver: "json-file"
-    #   options:
-    #     max-size: "10m"
-    #     max-file: "3"
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
 
   # ---------------------------------------------------------------------------
   # Web UI - Nginx serving React app and proxying /api to backend

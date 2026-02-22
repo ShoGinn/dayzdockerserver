@@ -378,5 +378,78 @@ export async function mockRequest<T>(endpoint: string, options: RequestInit = {}
     return { success: true, message: 'Storage wiped (mock)' } as T
   }
 
+  // Logs
+  if (path === '/logs/files' && method === 'GET') {
+    return {
+      success: true,
+      files: [
+        {
+          name: 'server_console.log',
+          path: '/profiles/server_console.log',
+          size_bytes: 1024 * 512,
+          size_human: '512 KB',
+        },
+        {
+          name: 'DayZServer_x64.ADM',
+          path: '/profiles/DayZServer_x64.ADM',
+          size_bytes: 1024 * 128,
+          size_human: '128 KB',
+        },
+        {
+          name: 'DayZServer_x64.RPT',
+          path: '/profiles/DayZServer_x64.RPT',
+          size_bytes: 1024 * 1024 * 2,
+          size_human: '2 MB',
+        },
+      ],
+    } as T
+  }
+
+  if (path === '/logs' && method === 'GET') {
+    return {
+      success: true,
+      message: 'Read 2048 bytes',
+      content:
+        '12:00:00 | Server started\n12:00:01 | Loading mods...\n12:00:05 | All mods loaded\n12:01:00 | Player "Survivor" connected\n12:05:30 | Player "Survivor" disconnected\n',
+    } as T
+  }
+
+  // Server params
+  if (path === '/server/params' && method === 'GET') {
+    return {
+      success: true,
+      params: {
+        port: 2302,
+        config: '/profiles/serverDZ.cfg',
+        profiles: '/profiles',
+        logs: 'full',
+        admin_log: true,
+        net_log: true,
+        freeze_check: true,
+        extra_params: [],
+      },
+      command_string:
+        '-config=/profiles/serverDZ.cfg -port=2302 -profiles=/profiles -dologs -adminlog -netlog -freezecheck',
+      source: 'default',
+    } as T
+  }
+
+  if (path === '/server/params' && method === 'POST') {
+    return { success: true, message: 'Server parameters updated (mock)' } as T
+  }
+
+  if (path === '/server/params' && method === 'DELETE') {
+    return { success: true, message: 'Server params override cleared (mock)' } as T
+  }
+
+  // Server channel
+  if (path === '/server/channel' && method === 'GET') {
+    return { success: true, channel: 'stable' } as T
+  }
+
+  if (path === '/server/channel' && method === 'POST') {
+    return { success: true, message: 'Channel updated (mock)' } as T
+  }
+
   throw new ApiError(404, `Mock route not implemented: ${method} ${endpoint}`)
 }

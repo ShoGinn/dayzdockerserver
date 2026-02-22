@@ -94,8 +94,8 @@ cd web && VITE_API_MOCK=true pnpm dev
 **6. Environment Configuration**
 
 ```bash
-# Copy example to .env.local (required for docker compose)
-cp .env.example .env.local
+# Copy example to .env (required for docker compose)
+cp .env.example .env
 
 # Key variables:
 # API_TOKEN=<generate-your-token>  # Required for auth (all endpoints except /health, /status)
@@ -251,7 +251,7 @@ docker compose build
 - API: 2GB mem, 2 CPU (~512MB reserve)
 - Server: 8GB mem (configurable), 4 CPU (configurable via env vars)
 - Web: 256MB mem, 0.5 CPU (~64MB reserve)
-- Adjust via `SERVER_MEMORY_LIMIT`, `SERVER_CPU_LIMIT` in `.env.local`
+- Adjust via `SERVER_MEMORY_LIMIT`, `SERVER_CPU_LIMIT` in `.env`
 
 **13. Health Checks**
 
