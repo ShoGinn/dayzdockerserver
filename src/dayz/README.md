@@ -30,8 +30,7 @@ src/dayz/
 │
 └── cli/                 # Command-Line Scripts
     ├── __init__.py
-    ├── healthcheck.py   # Container health check
-    └── init_volumes.py  # Volume initialization
+    └── healthcheck.py   # Container health check
 ```
 
 ## Module Organization
@@ -88,10 +87,6 @@ src/dayz/
 - **healthcheck.py**: Container health check script
   - Verifies supervisor is running
   - Checks state file freshness
-  
-- **init_volumes.py**: Volume initialization script
-  - Creates directory structure
-  - Sets proper ownership and permissions
 
 ## Import Patterns
 

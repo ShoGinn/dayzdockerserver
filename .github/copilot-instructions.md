@@ -8,7 +8,7 @@
 
 - **Backend:** Python 3.12+ (FastAPI, Pydantic, uvicorn)
 - **Frontend:** React 19 + TypeScript (Vite, React Router, Lucide icons)
-- **Build:** Docker multi-stage (4 stages), docker-compose orchestration
+- **Build:** Docker multi-stage (3 stages), docker-compose orchestration
 - **Architecture:** Unix socket IPC between API and server supervisor; strict type checking (mypy + Pydantic)
 - **Code Quality:** Ruff (linting, 100 char line limit), Biome (frontend linting/formatting)
 
@@ -133,18 +133,16 @@ cp .env.example .env
 - **pyproject.toml** → Python dependencies (FastAPI, Pydantic, uvicorn, dev: mypy, pytest, ruff), tool configs
 - **biome.json** → Frontend: single quotes, no semicolons, 100 char line width, 2-space indent
 - **Dockerfile** → 4 stages: web-build (Node), base (Ubuntu 24.04 + SteamCMD deps), api (FastAPI), server (supervisor), web (Nginx)
-- **docker-compose.yml** → 4 services (init, api, server, web) with health checks, volumes, resource limits
+- **docker-compose.yml** → 3 services (api, server, web) with health checks, volumes, resource limits
 - **files/serverDZ.cfg.example** → Server config template
 - **.env.example** → Required variables: API_TOKEN, USER_ID, port mappings, memory/CPU limits
 
 ### Docker Volumes (Persistent)
 
 - **dayz-homedir** → Steam authentication credentials
-- **dayz-serverfiles** → DayZ installation directory
-- **dayz-profiles** → Active server config, BattlEye, logs
+- **dayz-serverfiles** → DayZ installation, workshop mods (`steamapps/workshop/`), active missions (`mpmissions/`), mod symlinks (`@ModName`)
+- **dayz-profiles** → Active server config, BattlEye, logs, active mod symlinks (`@ModName`)
 - **dayz-mpmissions-upstream** → Pristine mission templates (backup)
-- **dayz-mpmissions** → Active missions (read by server)
-- **dayz-mods** → Workshop mods (symlinked to active/inactive)
 - **dayz-control** → IPC: supervisor.sock, state.json, mod parameters
 
 ---
@@ -199,9 +197,13 @@ docker compose build
 - Helper: `should_drop_privileges()` in `utils/process_utils.py`
 - Check before spawning subprocesses
 
-**5. Mod Mode Symlinks**
+**5. Mod Symlink Architecture**
 
-- Mods are NOT copied; they're symlinked to `/mods/active/` or `/mods/inactive/`
+- Mods are NOT copied; they use symlinks at two levels:
+  - **Install:** SteamCMD downloads to `/serverfiles/steamapps/workshop/content/221100/<mod_id>/`, then `/serverfiles/@ModName` → workshop dir
+  - **Activate:** `/profiles/@ModName` → workshop dir (makes mod visible to server)
+  - **Deactivate:** removes the `/profiles/@ModName` symlink
+  - **Pre-start sync:** ensures `/serverfiles/` symlinks match `/profiles/`
 - Mod server/client designation stored in `/control/mod_modes.json`
 - Passed to DayZ via `-mod=` parameter at startup
 - ModManager handles symlink lifecycle
@@ -209,7 +211,7 @@ docker compose build
 **6. Mission File Architecture**
 
 - `/mpmissions-upstream/` = pristine templates (backup for restore)
-- `/mpmissions/` = active missions (server reads these at runtime)
+- `/serverfiles/mpmissions/` = active missions (server reads these at runtime)
 - Design: copy upstream → active when installing/updating map
 
 **7. Channel Switching (Steam App IDs)**
@@ -270,6 +272,12 @@ docker compose build
 - Web container proxies `/api/` to API container with 300s read/send timeouts
 - Accommodates long-running operations (install, update)
 - Do not reduce without testing
+
+**16. Core Dumps Disabled**
+
+- Server container sets `ulimits: core: 0` to prevent core dump generation
+- DayZ crashes produce multi-GB dump files (`core.*`) in `/serverfiles` that are not useful for debugging
+- Do not re-enable without a plan for managing disk space
 
 ---
 

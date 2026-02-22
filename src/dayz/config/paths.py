@@ -49,10 +49,6 @@ SERVER_KEYS_DIR = SERVER_FILES / "keys"
 # Mission files
 MPMISSIONS_UPSTREAM = Path("/mpmissions-upstream")  # pristine templates
 MPMISSIONS_ACTIVE = Path("/serverfiles/mpmissions")  # live missions used by the server
-MPMISSIONS = Path("/mpmissions")  # legacy/read-only template mount (kept for compatibility)
-
-# Mods (alternative location, usually same as workshop)
-MODS_DIR = Path("/mods")
 
 # Server profile (config, battleye, logs)
 PROFILES_DIR = Path("/profiles")

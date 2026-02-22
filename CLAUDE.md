@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-Full-stack Docker application for managing DayZ dedicated servers. Python/FastAPI backend, React/TypeScript frontend, 4-container Docker architecture with Unix socket IPC.
+Full-stack Docker application for managing DayZ dedicated servers. Python/FastAPI backend, React/TypeScript frontend, 3-container Docker architecture with Unix socket IPC.
 
 ## Verification & Validation
 
@@ -38,11 +38,11 @@ cd web && VITE_API_MOCK=true pnpm dev    # Frontend with mock API (no backend ne
 
 ## Architecture
 
-**4 containers:** init (one-shot volume permissions) → api (FastAPI) → server (DayZ supervisor) → web (Nginx + React)
+**3 containers:** api (FastAPI) → server (DayZ supervisor) → web (Nginx + React)
 
 **IPC:** API ↔ Supervisor communicate via Unix socket at `/control/supervisor.sock`. Supervisor writes state to `/control/state.json`. Use `DayZSupervisorClient` from `services/supervisor.py`.
 
-**7 named volumes:** homedir (Steam creds), serverfiles (DayZ install), profiles (config/BattlEye), mpmissions-upstream (pristine templates), mpmissions (active missions), mods (workshop mods), control (socket + state + mod params)
+**5 named volumes:** homedir (Steam creds), serverfiles (DayZ install + workshop mods + active missions), profiles (config/BattlEye + active mod symlinks), mpmissions-upstream (pristine mission templates), control (socket + state + mod params)
 
 **Key source paths:**
 - `src/dayz/config/paths.py` — Single source of truth for all internal paths
@@ -58,8 +58,9 @@ cd web && VITE_API_MOCK=true pnpm dev    # Frontend with mock API (no backend ne
 2. **Socket IPC, not files.** API talks to supervisor via Unix socket, not command files.
 3. **Strict types everywhere.** mypy strict mode: no `Any`, no implicit Optional, all functions annotated.
 4. **Non-root containers.** Run as UID 1000. SteamCMD uses passwordless sudo. Check `should_drop_privileges()` before spawning subprocesses.
-5. **Mods are symlinked, not copied.** Symlinked to `/mods/active/` or `/mods/inactive/`. Mod modes stored in `/control/mod_modes.json`.
-6. **Mission files: upstream vs active.** `/mpmissions-upstream/` = pristine backups. `/mpmissions/` = what the server reads. Copy upstream → active on install/update.
+5. **Mods are symlinked, not copied.** SteamCMD downloads to `/serverfiles/steamapps/workshop/`. Install creates `/serverfiles/@ModName` symlink. Activate creates `/profiles/@ModName` symlink. Deactivate removes the `/profiles/` symlink. Mod modes stored in `/control/mod_modes.json`.
+6. **Mission files: upstream vs active.** `/mpmissions-upstream/` = pristine backups. `/serverfiles/mpmissions/` = what the server reads. Copy upstream → active on install/update.
+8. **Core dumps disabled.** The server container sets `ulimits: core: 0` to prevent multi-GB dump files from DayZ crashes filling `/serverfiles`.
 7. **Auth required.** All API endpoints except `/health`, `/status`, `/login` need `Authorization: Bearer {API_TOKEN}`.
 
 ## Code Style

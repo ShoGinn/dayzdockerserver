@@ -12,7 +12,7 @@
 # Stages:
 #   - web-build: Build the frontend
 #   - base: Common dependencies, SteamCMD, Python
-#   - api: Management API (runs as user with sudo)
+#   - api: Management API (runs as user with sudo, initializes volumes)
 #   - server: DayZ server with supervisor
 #   - web: Nginx serving frontend with API proxy
 # =============================================================================
@@ -159,6 +159,10 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     xmlstarlet \
     && rm -rf /var/lib/apt/lists/*
 
+# Copy entrypoint script (before USER switch so file is root-owned)
+COPY scripts/api-entrypoint.sh /scripts/api-entrypoint.sh
+RUN chmod +x /scripts/api-entrypoint.sh
+
 WORKDIR /app
 
 # NOTE: Run as non-root user for security
@@ -170,6 +174,7 @@ EXPOSE 8080
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
     CMD curl -fsSL http://localhost:8080/health || exit 1
 
+ENTRYPOINT ["/usr/bin/tini", "--", "/scripts/api-entrypoint.sh"]
 CMD ["python3", "-m", "uvicorn", "dayz.services.api:app", "--host", "0.0.0.0", "--port", "8080"]
 
 LABEL org.opencontainers.image.title="DayZ Server API" \

@@ -28,48 +28,12 @@ volumes:
     name: dayz-mpmissions-upstream
     labels:
       com.dayz.description: "Upstream pristine mpmissions (read-only source)"
-  mpmissions:
-    name: dayz-mpmissions
-    labels:
-      com.dayz.description: "Active mpmissions (server uses these)"
-  mods:
-    name: dayz-mods
-    labels:
-      com.dayz.description: "Workshop mods"
   control:
     name: dayz-control
     labels:
       com.dayz.description: "Control plane for API <-> Server communication"
 
 services:
-  # ---------------------------------------------------------------------------
-  # Init container - one-shot permission fixer
-  # ---------------------------------------------------------------------------
-  init:
-    image: ${REGISTRY:-}dayz-server:${TAG:-latest}-base
-    build:
-      context: .
-      target: base
-      args:
-        USER_ID: ${USER_ID:-1000}
-    user: "0"
-    volumes:
-      - homedir:/home/user
-      - serverfiles:/serverfiles
-      - mpmissions-upstream:/mpmissions-upstream
-      - mpmissions:/mpmissions
-      - mods:/mods
-      - profiles:/profiles
-      - control:/control
-    command: ["python3", "-m", "dayz.cli.init_volumes"]
-    restart: "no"
-    env_file:
-      - path: .env
-        required: true
-    labels:
-      com.dayz.service: "init"
-      com.dayz.description: "One-time volume initialization"
-
   # ---------------------------------------------------------------------------
   # API container - management endpoints
   # ---------------------------------------------------------------------------
@@ -82,15 +46,10 @@ services:
         USER_ID: ${USER_ID:-1000}
     # Run as user - use sudo in code for privileged ops
     user: "${USER_ID:-1000}"
-    depends_on:
-      init:
-        condition: service_completed_successfully
     volumes:
       - homedir:/home/user
       - serverfiles:/serverfiles
       - mpmissions-upstream:/mpmissions-upstream
-      - mpmissions:/mpmissions
-      - mods:/mods
       - profiles:/profiles
       - control:/control
       - type: bind
@@ -140,21 +99,24 @@ services:
         USER_ID: ${USER_ID:-1000}
     user: "${USER_ID:-1000}"
     depends_on:
-      init:
-        condition: service_completed_successfully
       api:
         condition: service_healthy
     volumes:
       - homedir:/home/user
       - serverfiles:/serverfiles
-      - mpmissions:/mpmissions
-      - mods:/mods
       - profiles:/profiles
       - control:/control
       - type: bind
         source: ./files
         target: /files
         read_only: true
+    # Disable core dumps - DayZ crashes generate multi-GB dump files in /serverfiles
+    # that are not useful for debugging and waste disk space. ulimits sets the max
+    # core file size (in bytes); 0 = disabled.
+    ulimits:
+      core:
+        soft: 0
+        hard: 0
     # Host networking for LAN server browser visibility
     # Comment out and use ports below if you don't need LAN discovery
     network_mode: host
