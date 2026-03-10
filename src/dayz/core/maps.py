@@ -13,7 +13,7 @@ import subprocess
 from dataclasses import dataclass
 from pathlib import Path
 
-from dayz.config.paths import FILES_DIR, MPMISSIONS_ACTIVE, MPMISSIONS_UPSTREAM
+from dayz.config.paths import FILES_DIR, MPMISSIONS_ACTIVE, MPMISSIONS_UPSTREAM, WORKSHOP_DIR
 
 # Map definitions - workshop ID to map info
 MAP_REGISTRY: dict[str, "MapDefinition"] = {}
@@ -31,6 +31,7 @@ class MapDefinition:
     default_template: str  # Default template to use
     description: str  # Description for UI
     required_mods: list[str]  # Additional required workshop mod IDs
+    workshop_mission_id: str = ""  # Workshop ID for mission files (alternative to GitHub repo)
 
     def __post_init__(self) -> None:
         # Register in global registry
@@ -123,6 +124,31 @@ MapDefinition(
     default_template="serverMission.Pripyat",
     description="Chernobyl exclusion zone",
     required_mods=[],
+)
+
+# Bitterroot
+MapDefinition(
+    name="Bitterroot",
+    workshop_id="2906823750",
+    repo_url="https://github.com/Mattty-Ice/Bitterroot-DayZ.git",
+    repo_subdir="",
+    mission_templates=["empty.Bitterroot"],
+    default_template="empty.Bitterroot",
+    description="155km² Montana wilderness inspired by Far Cry 5",
+    required_mods=[],
+)
+
+# Bitterroot (Community Missions)
+MapDefinition(
+    name="Bitterroot (Community Missions)",
+    workshop_id="2983414044",
+    repo_url="",
+    workshop_mission_id="2983414044",
+    repo_subdir="",
+    mission_templates=[],  # Populate after inspecting workshop download
+    default_template="",  # Populate after inspecting workshop download
+    description="Community mission files for Bitterroot by Deceased",
+    required_mods=["2906823750"],  # Requires Bitterroot terrain
 )
 
 
@@ -269,6 +295,9 @@ class MapManager:
         if workshop_id in ("0", "1", "2"):
             return True, f"{map_def.name} is an official map - no installation needed"
 
+        if map_def.workshop_mission_id:
+            return self._install_map_from_workshop(map_def)
+
         try:
             # Clone or update the repo
             repo_dir = Path("/tmp") / map_def.repo_url.split("/")[-1].replace(".git", "")
@@ -332,6 +361,51 @@ class MapManager:
             return False, "Git operation timed out"
         except Exception as e:
             return False, f"Installation failed: {e}"
+
+    def _install_map_from_workshop(self, map_def: MapDefinition) -> tuple[bool, str]:
+        """Install mission files from a Steam Workshop item"""
+        from dayz.core.steam import SteamCMD
+
+        steamcmd = SteamCMD()
+        success, output = steamcmd.install_mod(map_def.workshop_mission_id)
+        if not success:
+            return False, f"Failed to download workshop item: {output}"
+
+        download_dir = WORKSHOP_DIR / map_def.workshop_mission_id
+
+        # Find mission template directories
+        if map_def.mission_templates:
+            templates_to_find = map_def.mission_templates
+        else:
+            # Auto-discover: scan for directories containing init.c (standard mission marker)
+            templates_to_find = [
+                p.parent.name for p in download_dir.rglob("init.c") if p.parent.is_dir()
+            ]
+            if not templates_to_find:
+                return False, "No mission directories found in workshop download (no init.c found)"
+
+        copied = []
+        for template in templates_to_find:
+            # Search for the template directory in the download
+            for mission_dir in download_dir.rglob(template):
+                if mission_dir.is_dir():
+                    dst = MPMISSIONS_ACTIVE / template
+                    if dst.exists():
+                        shutil.rmtree(dst)
+                    shutil.copytree(mission_dir, dst)
+
+                    upstream_dst = MPMISSIONS_UPSTREAM / template
+                    if upstream_dst.exists():
+                        shutil.rmtree(upstream_dst)
+                    shutil.copytree(mission_dir, upstream_dst)
+
+                    copied.append(template)
+                    break
+
+        if not copied:
+            return False, "Could not find mission directories in workshop download"
+
+        return True, f"Installed {map_def.name} mission files: {', '.join(copied)}"
 
     def uninstall_map(self, workshop_id: str) -> tuple[bool, str]:
         """Remove a map's mission files"""
