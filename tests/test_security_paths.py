@@ -11,6 +11,7 @@ from dayz.core import server as server_module
 from dayz.core.mods import ModManager
 from dayz.core.server import ServerManager
 from dayz.mods import vpp
+from dayz.utils.steam_id import validate_workshop_id
 
 
 class StoppedControl:
@@ -41,6 +42,13 @@ def test_mod_paths_reject_non_numeric_workshop_ids(
 def test_bulk_mod_request_rejects_unsafe_workshop_ids() -> None:
     with pytest.raises(ValidationError, match="Workshop IDs"):
         BulkModRequest(mod_ids=["123", "../../profiles"])
+
+
+def test_workshop_id_is_canonicalized_through_integer_conversion() -> None:
+    assert validate_workshop_id("000123") == "123"
+
+    with pytest.raises(ValueError, match="greater than zero"):
+        validate_workshop_id("0")
 
 
 def test_mod_name_rejects_path_separators(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
