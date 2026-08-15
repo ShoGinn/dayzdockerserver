@@ -62,6 +62,54 @@ def test_mod_name_rejects_path_separators(monkeypatch: pytest.MonkeyPatch, tmp_p
     assert manager._get_mod_name("123") is None
 
 
+def test_mod_name_rejects_meta_symlink_outside_workshop(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    workshop = tmp_path / "workshop"
+    mod_dir = workshop / "123"
+    mod_dir.mkdir(parents=True)
+    outside_meta = tmp_path / "outside-meta.cpp"
+    outside_meta.write_text('name = "Outside";')
+    (mod_dir / "meta.cpp").symlink_to(outside_meta)
+    monkeypatch.setattr(mods_module, "WORKSHOP_DIR", workshop)
+    manager = ModManager.__new__(ModManager)
+
+    assert manager._get_mod_name("123") is None
+
+
+def test_mod_keys_reject_directory_symlink_outside_workshop(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    workshop = tmp_path / "workshop"
+    mod_dir = workshop / "123"
+    mod_dir.mkdir(parents=True)
+    outside_keys = tmp_path / "outside-keys"
+    outside_keys.mkdir()
+    (mod_dir / "keys").symlink_to(outside_keys, target_is_directory=True)
+    monkeypatch.setattr(mods_module, "WORKSHOP_DIR", workshop)
+    manager = ModManager.__new__(ModManager)
+
+    assert manager._get_mod_keys_dir("123") is None
+
+
+def test_mod_keys_ignore_key_file_symlink_outside_workshop(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    workshop = tmp_path / "workshop"
+    keys_dir = workshop / "123" / "keys"
+    keys_dir.mkdir(parents=True)
+    outside_key = tmp_path / "outside.bikey"
+    outside_key.write_text("key")
+    (keys_dir / "escape.bikey").symlink_to(outside_key)
+    server_keys = tmp_path / "server-keys"
+    monkeypatch.setattr(mods_module, "WORKSHOP_DIR", workshop)
+    monkeypatch.setattr(mods_module, "SERVER_KEYS_DIR", server_keys)
+    manager = ModManager.__new__(ModManager)
+
+    assert manager._symlink_mod_keys("123") is True
+    assert list(server_keys.iterdir()) == []
+
+
 @pytest.mark.parametrize(
     "storage_name",
     ["../storage_1", "storage_1/../../../outside", "/tmp/storage_1", "storage_1\\other"],

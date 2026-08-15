@@ -177,10 +177,14 @@ class ModManager:
 
     def _get_mod_keys_dir(self, mod_id: str) -> Path | None:
         """Get mod keys directory (try both cases)"""
+        mod_dir = self._get_mod_dir(mod_id)
         for keys_name in ["keys", "Keys"]:
-            keys_dir = self._get_mod_dir(mod_id) / keys_name
-            if keys_dir.exists():
-                return keys_dir
+            keys_dir = mod_dir / keys_name
+            if keys_dir.is_symlink():
+                continue
+            resolved = keys_dir.resolve(strict=False)
+            if resolved.parent == mod_dir and resolved.is_dir():
+                return resolved
         return None
 
     def _get_mod_xml_env(self, mod_id: str) -> Path:
@@ -195,10 +199,13 @@ class ModManager:
     def _get_mod_name(self, mod_id: str) -> str | None:
         """Extract mod name from meta.cpp"""
         try:
-            meta_path = self._get_mod_meta_path(mod_id)
-            if not meta_path.is_file():
+            mod_dir = self._get_mod_dir(mod_id)
+            meta_path = mod_dir / "meta.cpp"
+            if meta_path.is_symlink() or not meta_path.is_file():
                 return None
-            content = meta_path.read_text()
+            if meta_path.resolve().parent != mod_dir:
+                return None
+            content = meta_path.read_text(encoding="utf-8")
             mod_name = extract_mod_name_from_meta(content)
             if (
                 not mod_name
@@ -292,6 +299,10 @@ class ModManager:
 
         try:
             for key_file in keys_dir.glob("*.bikey"):
+                if key_file.is_symlink() or not key_file.is_file():
+                    continue
+                if key_file.resolve().parent != keys_dir:
+                    continue
                 dst = SERVER_KEYS_DIR / key_file.name
                 self._remove_symlink_if_exists(dst)
                 dst.symlink_to(key_file)
@@ -308,6 +319,10 @@ class ModManager:
         try:
             # Find and remove symlinks pointing to this mod's keys
             for key_file in keys_dir.glob("*.bikey"):
+                if key_file.is_symlink() or not key_file.is_file():
+                    continue
+                if key_file.resolve().parent != keys_dir:
+                    continue
                 dst = SERVER_KEYS_DIR / key_file.name
                 if dst.is_symlink():
                     try:
