@@ -87,7 +87,7 @@ jobs:
           docker compose logs api web init
           exit 1
       - name: Scan repository
-        uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # 0.35.0
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # 0.36.0
         with:
           scan-type: fs
           scan-ref: .
@@ -96,7 +96,7 @@ jobs:
           severity: UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL
           exit-code: 1
       - name: Reject high/critical repository findings, including unfixed
-        uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # 0.35.0
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # 0.36.0
         with:
           scan-type: fs
           scan-ref: .
@@ -104,40 +104,40 @@ jobs:
           severity: HIGH,CRITICAL
           exit-code: 1
       - name: Scan API image
-        uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # 0.35.0
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # 0.36.0
         with:
           image-ref: dayz-server:latest-api
           ignore-unfixed: true
           severity: UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL
           exit-code: 1
       - name: Scan server image
-        uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # 0.35.0
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # 0.36.0
         with:
           image-ref: dayz-server:latest-server
           ignore-unfixed: true
           severity: UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL
           exit-code: 1
       - name: Scan web image
-        uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # 0.35.0
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # 0.36.0
         with:
           image-ref: dayz-server:latest-web
           ignore-unfixed: true
           severity: UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL
           exit-code: 1
       - name: Reject high/critical image findings, including unfixed
-        uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # 0.35.0
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # 0.36.0
         with:
           image-ref: dayz-server:latest-api
           severity: HIGH,CRITICAL
           exit-code: 1
       - name: Reject high/critical server findings, including unfixed
-        uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # 0.35.0
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # 0.36.0
         with:
           image-ref: dayz-server:latest-server
           severity: HIGH,CRITICAL
           exit-code: 1
       - name: Reject high/critical web findings, including unfixed
-        uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # 0.35.0
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # 0.36.0
         with:
           image-ref: dayz-server:latest-web
           severity: HIGH,CRITICAL
