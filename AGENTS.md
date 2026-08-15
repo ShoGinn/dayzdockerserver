@@ -53,6 +53,10 @@ Pin reproducible build inputs, including container images by version and digest,
 and GitHub Actions by commit SHA. Commit `uv.lock` and `web/pnpm-lock.yaml`; installs and CI use
 frozen/locked modes. `pnpm-workspace.yaml` explicitly permits only reviewed install scripts.
 
+Configure Dependabot with the `uv` ecosystem so Python updates include `uv.lock`. Group frontend
+and GitHub Actions updates, stagger ecosystem schedules, and keep Node on an active LTS major until
+the next even-numbered release enters LTS and receives explicit review.
+
 Use centralized paths from `src/dayz/config/paths.py`. Workshop content is downloaded beneath
 `/serverfiles/steamapps/workshop/content/221100`; installed and active mods use the established
 symlink model. Preserve stable app ID `223350` and experimental app ID `1042420`.
