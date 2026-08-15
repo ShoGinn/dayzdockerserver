@@ -54,6 +54,13 @@ def test_resolver_rejects_directories(monkeypatch: pytest.MonkeyPatch, tmp_path:
         resolve_profile_log_file("logs")
 
 
+def test_resolver_reports_missing_log(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    configure_profiles(monkeypatch, tmp_path)
+
+    with pytest.raises(FileNotFoundError):
+        resolve_profile_log_file("missing.log")
+
+
 def test_tail_reads_only_requested_bytes(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     configure_profiles(monkeypatch, tmp_path)
     (tmp_path / "server.log").write_bytes(b"0123456789")

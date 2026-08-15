@@ -176,6 +176,15 @@ class BulkModRequest(BaseModel):
         json_schema_extra={"example": {"mod_ids": ["1559212036", "1623711988", "1828439124"]}}
     )
 
+    @field_validator("mod_ids")
+    @classmethod
+    def _validate_mod_ids(cls, values: list[str]) -> list[str]:
+        if not values:
+            raise ValueError("At least one Workshop ID is required")
+        if any(not value.isdigit() or not 1 <= len(value) <= 20 for value in values):
+            raise ValueError("Workshop IDs must contain 1 to 20 digits")
+        return values
+
 
 class ConfigContent(BaseModel):
     """Server config content"""

@@ -15,6 +15,15 @@ import re
 
 import requests
 
+WORKSHOP_ID_PATTERN = re.compile(r"[0-9]{1,20}")
+
+
+def validate_workshop_id(workshop_id: str) -> str:
+    """Return a validated numeric Steam Workshop item ID."""
+    if WORKSHOP_ID_PATTERN.fullmatch(workshop_id) is None:
+        raise ValueError("Workshop ID must contain 1 to 20 digits")
+    return workshop_id
+
 
 def resolve_username_to_steam64(username: str) -> tuple[bool, str | None, str]:
     """Resolve a Steam username to a Steam64 ID.

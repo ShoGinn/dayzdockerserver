@@ -28,6 +28,7 @@ from dayz.utils.process_utils import (
     create_privilege_dropper,
     should_drop_privileges,
 )
+from dayz.utils.steam_id import validate_workshop_id
 from dayz.utils.text_utils import mask_username, parse_steam_username
 from dayz.utils.vdf import validate_config_vdf
 
@@ -224,6 +225,10 @@ class SteamCMD:
 
     def install_mod(self, mod_id: str) -> tuple[bool, str]:
         """Download a workshop mod"""
+        try:
+            mod_id = validate_workshop_id(mod_id)
+        except ValueError as error:
+            return False, str(error)
         username = self._get_username()
         args = [
             f"+login {username}",
@@ -244,6 +249,10 @@ class SteamCMD:
 
         # Add all mod download commands
         for mod_id in mod_ids:
+            try:
+                mod_id = validate_workshop_id(mod_id)
+            except ValueError as error:
+                return False, str(error)
             args.append(f"+workshop_download_item {DAYZ_CLIENT_APPID} {mod_id}")
 
         result = self._run_as_user(args, timeout=3600)

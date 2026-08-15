@@ -854,7 +854,6 @@ async def stream_log(
 ) -> StreamingResponse:
     """Stream a log file via server-sent events (basic)."""
     import asyncio
-    from datetime import datetime
 
     if filename is None:
         success, _, cfg = server.get_server_config()
@@ -864,10 +863,10 @@ async def stream_log(
         raise HTTPException(status_code=404, detail="Log file not found")
     try:
         path = resolve_profile_log_file(filename)
+    except FileNotFoundError as error:
+        raise HTTPException(status_code=404, detail="Log file not found") from error
     except ValueError as error:
         raise HTTPException(status_code=400, detail=str(error)) from error
-    if not path.is_file():
-        raise HTTPException(status_code=404, detail="Log file not found")
 
     async def event_generator() -> AsyncIterator[str]:
         try:
@@ -879,8 +878,9 @@ async def stream_log(
                         await asyncio.sleep(0.5)
                         continue
                     yield f"data: {line.rstrip()}\n\n"
-        except Exception as e:
-            yield f"data: [stream error] {e} ({datetime.now().isoformat()})\n\n"
+        except Exception as error:
+            logging.getLogger(__name__).warning("Log stream failed", exc_info=error)
+            yield "data: [stream error]\n\n"
 
     headers = {"Content-Type": "text/event-stream"}
     return StreamingResponse(event_generator(), headers=headers)
