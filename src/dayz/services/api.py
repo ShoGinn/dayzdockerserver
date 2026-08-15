@@ -878,8 +878,8 @@ async def stream_log(
                         await asyncio.sleep(0.5)
                         continue
                     yield f"data: {line.rstrip()}\n\n"
-        except Exception as error:
-            logging.getLogger(__name__).warning("Log stream failed", exc_info=error)
+        except Exception:
+            logging.getLogger(__name__).warning("Log stream failed", exc_info=True)
             yield "data: [stream error]\n\n"
 
     headers = {"Content-Type": "text/event-stream"}

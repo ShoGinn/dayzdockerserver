@@ -566,8 +566,8 @@ class ServerManager:
             try:
                 config = ServerConfig.from_cfg_file(SERVER_CFG)
                 return True, "Loaded from cfg", config
-            except Exception as e:
-                logger.warning("Failed to parse server configuration", exc_info=e)
+            except Exception:
+                logger.warning("Failed to parse server configuration", exc_info=True)
                 return False, "Failed to parse server configuration", None
 
         return True, "No config found (using defaults)", ServerConfig()
@@ -797,8 +797,8 @@ class ServerManager:
                 log_file.seek(start)
                 content = log_file.read(bytes_count).decode("utf-8", errors="replace")
             return True, f"Read {len(content)} bytes", content
-        except Exception as e:
-            logger.warning("Failed to read log file", exc_info=e)
+        except Exception:
+            logger.warning("Failed to read log file", exc_info=True)
             return False, "Failed to read log", ""
 
     def wipe_storage(self, storage_name: str | None = None) -> tuple[bool, str]:
