@@ -24,7 +24,7 @@ async function getMockRequest() {
   return mockRequestFn
 }
 
-class ApiError extends Error {
+export class ApiError extends Error {
   constructor(
     public status: number,
     message: string
@@ -348,5 +348,3 @@ export const api = {
       }
     ),
 }
-
-export { ApiError }

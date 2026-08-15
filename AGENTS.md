@@ -94,6 +94,12 @@ trivy image --ignore-unfixed --severity UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL \
   --exit-code 1 dayz-server:latest-server
 trivy image --ignore-unfixed --severity UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL \
   --exit-code 1 dayz-server:latest-web
+
+# Vendor-unfixed findings remain visible and high/critical findings fail release checks.
+trivy fs --scanners vuln,misconfig --severity HIGH,CRITICAL --exit-code 1 .
+trivy image --severity HIGH,CRITICAL --exit-code 1 dayz-server:latest-api
+trivy image --severity HIGH,CRITICAL --exit-code 1 dayz-server:latest-server
+trivy image --severity HIGH,CRITICAL --exit-code 1 dayz-server:latest-web
 ```
 
 On a native `linux/amd64` runner, also require:

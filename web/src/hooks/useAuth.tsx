@@ -1,5 +1,5 @@
 import { createContext, type ReactNode, useCallback, useContext, useEffect, useState } from 'react'
-import { api } from '../api'
+import { ApiError, api } from '../api'
 
 interface AuthContextType {
   isAuthenticated: boolean
@@ -33,7 +33,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       api
         .verifyToken(token)
         .then(() => setIsAuthenticated(true))
-        .catch(() => logout())
+        .catch(error => {
+          if (error instanceof ApiError && error.status === 401) {
+            logout()
+            return
+          }
+          // The backend still enforces authentication. Preserve the local
+          // session during transient network and server failures so a valid
+          // token is not destroyed by an outage.
+          setIsAuthenticated(true)
+        })
         .finally(() => setIsVerifying(false))
     } else {
       setIsVerifying(false)

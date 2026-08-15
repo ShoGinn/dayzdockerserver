@@ -41,8 +41,18 @@ services:
       - /bin/sh
       - -ec
       - |
+        ownership_marker=/control/.volume-ownership
+        expected_owner="$${USER_ID}:$${GROUP_ID}"
         mkdir -p /home/user/.steam /serverfiles/steamapps/workshop/content/221100 /serverfiles/keys /serverfiles/mpmissions /mpmissions-upstream /profiles/battleye /control
-        chown -R "$${USER_ID}:$${GROUP_ID}" /home/user /serverfiles /mpmissions-upstream /profiles /control
+        if [ ! -f "$${ownership_marker}" ] || [ "$$(cat "$${ownership_marker}")" != "$${expected_owner}" ]; then
+          echo "Initializing volume ownership for $${expected_owner}"
+          chown -R "$${USER_ID}:$${GROUP_ID}" /home/user /serverfiles /mpmissions-upstream /profiles /control
+          printf '%s\n' "$${expected_owner}" > "$${ownership_marker}"
+          chown "$${USER_ID}:$${GROUP_ID}" "$${ownership_marker}"
+          chmod 0660 "$${ownership_marker}"
+        else
+          echo "Volume ownership already initialized for $${expected_owner}"
+        fi
         chmod 0770 /control
     environment:
       USER_ID: ${USER_ID:-1000}

@@ -87,11 +87,11 @@ export function LogViewer({ content, follow }: LogViewerProps) {
   }, [activeMatch, matches.length])
 
   useEffect(() => {
-    if (lines.length > 0 && follow && following) {
+    if (lineEntries.length > 0 && follow && following) {
       const viewport = viewportRef.current
       if (viewport) viewport.scrollTop = viewport.scrollHeight
     }
-  }, [lines.length, follow, following])
+  }, [lineEntries, follow, following])
 
   useEffect(() => {
     if (activeLine !== undefined) {
@@ -149,6 +149,7 @@ export function LogViewer({ content, follow }: LogViewerProps) {
       </div>
       <div
         ref={viewportRef}
+        data-testid="log-viewport"
         className={styles.viewport}
         onScroll={event => {
           const target = event.currentTarget

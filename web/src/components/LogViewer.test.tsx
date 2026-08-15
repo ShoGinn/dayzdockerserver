@@ -58,4 +58,18 @@ describe('LogViewer', () => {
     expect(screen.queryByText('second')).not.toBeNull()
     expect(screen.queryByText('2')).not.toBeNull()
   })
+
+  it('follows refreshed content when the line count is unchanged', () => {
+    const { rerender } = render(<LogViewer content="first" follow />)
+    const viewport = screen.getByTestId('log-viewport')
+    let scrollHeight = 100
+    Object.defineProperty(viewport, 'scrollHeight', { get: () => scrollHeight })
+
+    rerender(<LogViewer content="initial line" follow />)
+    expect(viewport.scrollTop).toBe(100)
+
+    scrollHeight = 200
+    rerender(<LogViewer content="updated line" follow />)
+    expect(viewport.scrollTop).toBe(200)
+  })
 })

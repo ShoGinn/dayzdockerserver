@@ -69,8 +69,16 @@ jobs:
       - name: Compose smoke test
         run: |
           docker compose up -d init api web
+          docker compose run --rm init | grep -q 'Volume ownership already initialized'
           for attempt in {1..30}; do
             if curl --fail --silent http://127.0.0.1:8080/health >/dev/null && curl --fail --silent http://127.0.0.1:8081/ >/dev/null; then
+              headers="$(curl --fail --silent --dump-header - --output /dev/null http://127.0.0.1:8081/)"
+              for header in content-security-policy permissions-policy referrer-policy x-content-type-options x-frame-options; do
+                if ! grep -qi "^${header}:" <<<"${headers}"; then
+                  echo "Missing required web security header: ${header}"
+                  exit 1
+                fi
+              done
               exit 0
             fi
             sleep 2
@@ -144,6 +152,6 @@ jobs:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
           fetch-depth: 0
-      - uses: gitleaks/gitleaks-action@ff98106e4c7b2bc287b24eaf42907196329070c7 # v2
+      - uses: gitleaks/gitleaks-action@e0c47f4f8be36e29cdc102c57e68cb5cbf0e8d1e # v3.0.0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
