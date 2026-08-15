@@ -11,9 +11,9 @@ FastAPI router for all mod-related operations:
 """
 
 from collections.abc import Callable
-from typing import Any
+from typing import Annotated, Any
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Path, Query
 
 from dayz.config.models import (
     BulkModRequest,
@@ -21,6 +21,8 @@ from dayz.config.models import (
     ModResponse,
 )
 from dayz.core.mods import ModManager, ModMode, ModOperationResult
+
+WorkshopId = Annotated[str, Path(pattern=r"^[0-9]{1,20}$")]
 
 
 def create_router(
@@ -61,7 +63,7 @@ def create_router(
 
     @router.post("/install/{mod_id}", response_model=ModOperationResult)
     async def install_mod(
-        mod_id: str,
+        mod_id: WorkshopId,
         _auth: bool = Depends(verify_token_dependency),  # noqa: B008
         mods: ModManager = Depends(get_mods_dependency),  # noqa: B008
     ) -> ModOperationResult:
@@ -73,7 +75,7 @@ def create_router(
 
     @router.delete("/{mod_id}", response_model=ModOperationResult)
     async def remove_mod(
-        mod_id: str,
+        mod_id: WorkshopId,
         _auth: bool = Depends(verify_token_dependency),  # noqa: B008
         mods: ModManager = Depends(get_mods_dependency),  # noqa: B008
     ) -> ModOperationResult:
@@ -85,7 +87,7 @@ def create_router(
 
     @router.post("/{mod_id}/activate", response_model=ModOperationResult)
     async def activate_mod(
-        mod_id: str,
+        mod_id: WorkshopId,
         _auth: bool = Depends(verify_token_dependency),  # noqa: B008
         mods: ModManager = Depends(get_mods_dependency),  # noqa: B008
     ) -> ModOperationResult:
@@ -97,7 +99,7 @@ def create_router(
 
     @router.post("/{mod_id}/deactivate", response_model=ModOperationResult)
     async def deactivate_mod(
-        mod_id: str,
+        mod_id: WorkshopId,
         _auth: bool = Depends(verify_token_dependency),  # noqa: B008
         mods: ModManager = Depends(get_mods_dependency),  # noqa: B008
     ) -> ModOperationResult:
@@ -109,7 +111,7 @@ def create_router(
 
     @router.post("/{mod_id}/mode", response_model=ModOperationResult)
     async def set_mod_mode(
-        mod_id: str,
+        mod_id: WorkshopId,
         mode: str = Query(..., description="'server' or 'client'"),
         _auth: bool = Depends(verify_token_dependency),  # noqa: B008
         mods: ModManager = Depends(get_mods_dependency),  # noqa: B008

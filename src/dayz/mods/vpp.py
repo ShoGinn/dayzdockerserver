@@ -3,6 +3,8 @@
 Helpers to manage VPPAdminTools configuration files under the profiles directory.
 """
 
+import os
+import tempfile
 from enum import StrEnum
 from pathlib import Path
 
@@ -97,7 +99,24 @@ def set_password(password: str) -> tuple[bool, str]:
 
     try:
         _ensure_parent(CREDS_PATH)
-        CREDS_PATH.write_text(password + "\n", encoding="utf-8")
+        descriptor, temporary_name = tempfile.mkstemp(
+            dir=CREDS_PATH.parent,
+            prefix=".credentials.",
+            text=True,
+        )
+        temporary_path = Path(temporary_name)
+        try:
+            os.fchmod(descriptor, 0o600)
+            with os.fdopen(descriptor, "w", encoding="utf-8") as credentials_file:
+                descriptor = -1
+                credentials_file.write(password + "\n")
+                credentials_file.flush()
+                os.fsync(credentials_file.fileno())
+            os.replace(temporary_path, CREDS_PATH)
+        finally:
+            if descriptor >= 0:
+                os.close(descriptor)
+            temporary_path.unlink(missing_ok=True)
         return True, "VPP password set"
     except OSError as e:
         return False, f"Failed to write credentials: {e}"

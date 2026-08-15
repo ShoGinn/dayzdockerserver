@@ -52,21 +52,40 @@ from dayz.utils.text_utils import extract_template_from_config, mask_password_in
 
 logger = logging.getLogger(__name__)
 MAX_LOG_TAIL_BYTES = 512 * 1024
+LOG_FILENAME_PATTERN = re.compile(r"[A-Za-z0-9][A-Za-z0-9._ -]{0,254}")
+MISSION_TEMPLATE_PATTERN = re.compile(r"[A-Za-z0-9][A-Za-z0-9._-]{0,127}")
+STORAGE_DIRECTORY_PATTERN = re.compile(r"storage_[A-Za-z0-9._-]{1,120}")
+
+
+def _resolve_single_child(root: Path, name: str, pattern: re.Pattern[str], label: str) -> Path:
+    """Resolve one validated path component directly beneath a trusted root."""
+    if pattern.fullmatch(name) is None:
+        raise ValueError(f"Invalid {label}")
+    resolved_root = root.resolve()
+    resolved = (resolved_root / name).resolve(strict=False)
+    if resolved.parent != resolved_root:
+        raise ValueError(f"{label.capitalize()} escapes its allowed directory")
+    return resolved
 
 
 def resolve_profile_log_file(filename: str) -> Path:
-    """Resolve a user-selected log while confining it to the profiles volume."""
-    requested = Path(filename)
-    if not filename or requested.is_absolute():
-        raise ValueError("Log filename must be relative to the profiles directory")
+    """Select an existing top-level regular log from the profiles volume."""
+    if LOG_FILENAME_PATTERN.fullmatch(filename) is None:
+        raise ValueError("Invalid log filename")
+    if not PROFILES_DIR.is_dir():
+        raise FileNotFoundError(filename)
 
     profiles_root = PROFILES_DIR.resolve()
-    resolved = (profiles_root / requested).resolve(strict=False)
-    if not resolved.is_relative_to(profiles_root):
-        raise ValueError("Log filename escapes the profiles directory")
-    if resolved.exists() and not resolved.is_file():
-        raise ValueError("Log filename must identify a regular file")
-    return resolved
+    for candidate in PROFILES_DIR.iterdir():
+        if candidate.name != filename:
+            continue
+        if candidate.is_symlink() or not candidate.is_file():
+            raise ValueError("Log filename must identify a regular file")
+        resolved = candidate.resolve()
+        if resolved.parent != profiles_root:
+            raise ValueError("Log filename escapes the profiles directory")
+        return resolved
+    raise FileNotFoundError(filename)
 
 
 class ServerControl:
@@ -547,8 +566,9 @@ class ServerManager:
             try:
                 config = ServerConfig.from_cfg_file(SERVER_CFG)
                 return True, "Loaded from cfg", config
-            except Exception as e:
-                return False, f"Failed to parse serverDZ.cfg: {e}", None
+            except Exception:
+                logger.warning("Failed to parse server configuration", exc_info=True)
+                return False, "Failed to parse server configuration", None
 
         return True, "No config found (using defaults)", ServerConfig()
 
@@ -633,8 +653,15 @@ class ServerManager:
     def setup_mpmissions(self) -> tuple[bool, str]:
         """Copy pristine mpmissions if needed"""
         map_name = self._get_map_name()
-        dst = MPMISSIONS_ACTIVE / map_name
-        src = MPMISSIONS_UPSTREAM / map_name
+        try:
+            dst = _resolve_single_child(
+                MPMISSIONS_ACTIVE, map_name, MISSION_TEMPLATE_PATTERN, "mission template"
+            )
+            src = _resolve_single_child(
+                MPMISSIONS_UPSTREAM, map_name, MISSION_TEMPLATE_PATTERN, "mission template"
+            )
+        except ValueError:
+            return False, "Invalid mission template"
 
         if dst.exists():
             return True, "MPMissions already set up"
@@ -655,7 +682,19 @@ class ServerManager:
     def get_storage_info(self) -> dict[str, Any]:
         """Get information about storage directories"""
         map_name = self._get_map_name()
-        mission_dir = MPMISSIONS_ACTIVE / map_name
+        try:
+            mission_dir = _resolve_single_child(
+                MPMISSIONS_ACTIVE, map_name, MISSION_TEMPLATE_PATTERN, "mission template"
+            )
+        except ValueError:
+            return {
+                "map": map_name,
+                "mission_dir": "",
+                "storage_dirs": [],
+                "total_size_bytes": 0,
+                "total_size_human": human_size(0),
+                "error": "Invalid mission template",
+            }
 
         storage_dirs = []
         total_size = 0
@@ -746,7 +785,10 @@ class ServerManager:
         if not filename:
             return False, "Log file not found", ""
 
-        path = resolve_profile_log_file(filename)
+        try:
+            path = resolve_profile_log_file(filename)
+        except FileNotFoundError:
+            return False, "Log file not found", ""
 
         try:
             size = path.stat().st_size
@@ -755,8 +797,9 @@ class ServerManager:
                 log_file.seek(start)
                 content = log_file.read(bytes_count).decode("utf-8", errors="replace")
             return True, f"Read {len(content)} bytes", content
-        except Exception as e:
-            return False, f"Failed to read log: {e}", ""
+        except Exception:
+            logger.warning("Failed to read log file", exc_info=True)
+            return False, "Failed to read log", ""
 
     def wipe_storage(self, storage_name: str | None = None) -> tuple[bool, str]:
         """Wipe player/world storage (persistence data)"""
@@ -765,29 +808,35 @@ class ServerManager:
             return False, "Server must be stopped before wiping storage"
 
         map_name = self._get_map_name()
-        mission_dir = MPMISSIONS_ACTIVE / map_name
+        try:
+            mission_dir = _resolve_single_child(
+                MPMISSIONS_ACTIVE, map_name, MISSION_TEMPLATE_PATTERN, "mission template"
+            )
+        except ValueError:
+            return False, "Invalid mission template"
 
         if not mission_dir.exists():
             return False, f"Mission directory not found: {mission_dir}"
 
-        wiped = []
-        errors = []
+        wiped: list[str] = []
+        errors: list[str] = []
+        available_storage_dirs = {
+            item.name: item
+            for item in mission_dir.iterdir()
+            if item.is_dir()
+            and not item.is_symlink()
+            and STORAGE_DIRECTORY_PATTERN.fullmatch(item.name) is not None
+        }
 
-        storage_dirs = (
-            [mission_dir / storage_name]
-            if storage_name
-            else [
-                item
-                for item in mission_dir.iterdir()
-                if item.is_dir() and item.name.startswith("storage_")
-            ]
-        )
-
-        if storage_name and not (mission_dir / storage_name).exists():
-            return False, f"Storage directory not found: {storage_name}"
-
-        if storage_name and not storage_name.startswith("storage_"):
-            return False, "Invalid storage directory name"
+        if storage_name:
+            if STORAGE_DIRECTORY_PATTERN.fullmatch(storage_name) is None:
+                return False, "Invalid storage directory name"
+            storage_dir = available_storage_dirs.get(storage_name)
+            if storage_dir is None:
+                return False, f"Storage directory not found: {storage_name}"
+            storage_dirs = [storage_dir]
+        else:
+            storage_dirs = list(available_storage_dirs.values())
 
         for storage_dir in storage_dirs:
             try:
