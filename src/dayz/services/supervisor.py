@@ -22,6 +22,7 @@ import time
 from dataclasses import asdict, dataclass, field
 from datetime import datetime
 from pathlib import Path
+from typing import Any
 
 from dayz.config.models import ServerCommand, ServerState
 from dayz.config.paths import (
@@ -72,7 +73,7 @@ class SupervisorState:
         self.updated_at = datetime.now().isoformat()
         return json.dumps(asdict(self), indent=2)
 
-    def to_dict(self) -> dict:
+    def to_dict(self) -> dict[str, Any]:
         self.updated_at = datetime.now().isoformat()
         return asdict(self)
 
@@ -83,7 +84,7 @@ class CommandResponse:
 
     success: bool
     message: str
-    state: dict | None = None
+    state: dict[str, Any] | None = None
 
     def to_json(self) -> str:
         return json.dumps({"success": self.success, "message": self.message, "state": self.state})
@@ -99,7 +100,7 @@ class DayZSupervisor:
 
     def __init__(self) -> None:
         self.state = SupervisorState()
-        self.process: subprocess.Popen | None = None
+        self.process: subprocess.Popen[bytes] | None = None
         self.should_run = True
         self.restart_times: list[float] = []
         self.state_lock = threading.Lock()
@@ -523,7 +524,7 @@ class DayZSupervisor:
         self.socket_server.listen(5)
 
         # Make socket accessible
-        SOCKET_PATH.chmod(0o666)
+        SOCKET_PATH.chmod(0o660)
 
         self.log(f"Socket server listening on {SOCKET_PATH}")
 
@@ -641,7 +642,7 @@ class DayZSupervisor:
 class DayZSupervisorClient:
     """Client for communicating with supervisor via Unix socket"""
 
-    def __init__(self, socket_path: Path | None = None):
+    def __init__(self, socket_path: Path | None = None) -> None:
         self.socket_path = socket_path or SOCKET_PATH
 
     def _send_command(self, command: str, timeout: float = 5.0) -> CommandResponse:

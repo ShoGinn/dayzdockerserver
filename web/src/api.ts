@@ -24,7 +24,7 @@ async function getMockRequest() {
   return mockRequestFn
 }
 
-class ApiError extends Error {
+export class ApiError extends Error {
   constructor(
     public status: number,
     message: string
@@ -75,7 +75,7 @@ export const api = {
   // Status
   getStatus: () => request<ServerStatus>('/status'),
   verifyToken: (token: string) =>
-    request<ServerStatus>('/status', {
+    request<{ authenticated: boolean }>('/auth/verify', {
       headers: { Authorization: `Bearer ${token}` },
     }),
 
@@ -348,5 +348,3 @@ export const api = {
       }
     ),
 }
-
-export { ApiError }

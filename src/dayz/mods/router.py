@@ -20,7 +20,7 @@ from dayz.config.models import (
     ModListResponse,
     ModResponse,
 )
-from dayz.core.mods import ModManager, ModOperationResult
+from dayz.core.mods import ModManager, ModMode, ModOperationResult
 
 
 def create_router(
@@ -117,7 +117,7 @@ def create_router(
         """Set explicit mod mode override (server/client)."""
         if mode not in ("server", "client"):
             raise HTTPException(status_code=400, detail="Mode must be 'server' or 'client'")
-        result = mods.set_mod_mode(mod_id, mode)  # type: ignore
+        result = mods.set_mod_mode(mod_id, ModMode(mode))
         if not result.success:
             raise HTTPException(status_code=400, detail=result.message)
         return result

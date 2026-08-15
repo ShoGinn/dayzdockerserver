@@ -34,18 +34,59 @@ volumes:
       com.dayz.description: "Control plane for API <-> Server communication"
 
 services:
+  init:
+    image: alpine:3.24.1@sha256:28bd5fe8b56d1bd048e5babf5b10710ebe0bae67db86916198a6eec434943f8b
+    user: "0:0"
+    command:
+      - /bin/sh
+      - -ec
+      - |
+        ownership_marker=/control/.volume-ownership
+        expected_owner="$${USER_ID}:$${GROUP_ID}"
+        mkdir -p /home/user/.steam /serverfiles/steamapps/workshop/content/221100 /serverfiles/keys /serverfiles/mpmissions /mpmissions-upstream /profiles/battleye /control
+        if [ ! -f "$${ownership_marker}" ] || [ "$$(cat "$${ownership_marker}")" != "$${expected_owner}" ]; then
+          echo "Initializing volume ownership for $${expected_owner}"
+          chown -R "$${USER_ID}:$${GROUP_ID}" /home/user /serverfiles /mpmissions-upstream /profiles /control
+          printf '%s\n' "$${expected_owner}" > "$${ownership_marker}"
+          chown "$${USER_ID}:$${GROUP_ID}" "$${ownership_marker}"
+          chmod 0660 "$${ownership_marker}"
+        else
+          echo "Volume ownership already initialized for $${expected_owner}"
+        fi
+        chmod 0770 /control
+    environment:
+      USER_ID: ${USER_ID:-1000}
+      GROUP_ID: ${GROUP_ID:-1000}
+    volumes:
+      - homedir:/home/user
+      - serverfiles:/serverfiles
+      - mpmissions-upstream:/mpmissions-upstream
+      - profiles:/profiles
+      - control:/control
+    restart: "no"
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+      - DAC_OVERRIDE
+      - FOWNER
+
   # ---------------------------------------------------------------------------
   # API container - management endpoints
   # ---------------------------------------------------------------------------
   api:
+    platform: linux/amd64
     image: ${REGISTRY:-}dayz-server:${TAG:-latest}-api
     build:
       context: .
       target: api
       args:
         USER_ID: ${USER_ID:-1000}
-    # Run as user - use sudo in code for privileged ops
-    user: "${USER_ID:-1000}"
+        GROUP_ID: ${GROUP_ID:-1000}
+    user: "${USER_ID:-1000}:${GROUP_ID:-1000}"
     volumes:
       - homedir:/home/user
       - serverfiles:/serverfiles
@@ -56,11 +97,20 @@ services:
         source: ./files
         target: /files
         read_only: true
+    depends_on:
+      init:
+        condition: service_completed_successfully
     ports:
-      - "${API_PORT:-8080}:8080"
+      - "${API_BIND_ADDRESS:-127.0.0.1}:${API_PORT:-8080}:8080"
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "curl", "-fsSL", "http://localhost:8080/health"]
+      test:
+        [
+          "CMD",
+          "python3",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8080/health', timeout=3).read()",
+        ]
       interval: 30s
       timeout: 5s
       retries: 3
@@ -71,6 +121,10 @@ services:
     environment:
       # Override any env vars here if needed
       - PYTHONUNBUFFERED=1
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
     labels:
       com.dayz.service: "api"
       com.dayz.description: "Management API server"
@@ -91,14 +145,18 @@ services:
   # Server container - DayZServer process
   # ---------------------------------------------------------------------------
   server:
+    platform: linux/amd64
     image: ${REGISTRY:-}dayz-server:${TAG:-latest}-server
     build:
       context: .
       target: server
       args:
         USER_ID: ${USER_ID:-1000}
-    user: "${USER_ID:-1000}"
+        GROUP_ID: ${GROUP_ID:-1000}
+    user: "${USER_ID:-1000}:${GROUP_ID:-1000}"
     depends_on:
+      init:
+        condition: service_completed_successfully
       api:
         condition: service_healthy
     volumes:
@@ -137,6 +195,10 @@ services:
         required: true
     environment:
       - PYTHONUNBUFFERED=1
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
     labels:
       com.dayz.service: "server"
       com.dayz.description: "DayZ game server"
@@ -165,7 +227,7 @@ services:
       api:
         condition: service_healthy
     ports:
-      - "${WEB_PORT:-8081}:80"
+      - "${WEB_PORT:-8081}:8080"
     restart: unless-stopped
     healthcheck:
       test:
@@ -175,7 +237,7 @@ services:
           "--no-verbose",
           "--tries=1",
           "--spider",
-          "http://127.0.0.1/",
+          "http://127.0.0.1:8080/",
         ]
       interval: 30s
       timeout: 3s
@@ -191,8 +253,10 @@ services:
           cpus: "0.5"
         reservations:
           memory: 64m
-    # Optional: Read-only root filesystem for better security
-    # read_only: true
-    # tmpfs:
-    #   - /var/cache/nginx
-    #   - /var/run
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=32m
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL

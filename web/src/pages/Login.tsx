@@ -1,5 +1,5 @@
 import { type FormEvent, useEffect, useRef, useState } from 'react'
-import { api } from '../api'
+import { ApiError, api } from '../api'
 import { Button } from '../components/Button'
 import { useAuth } from '../hooks/useAuth'
 import styles from './Login.module.css'
@@ -26,7 +26,7 @@ export function LoginPage() {
       await api.verifyToken(token)
       login(token)
     } catch (err) {
-      if (err instanceof Error && 'status' in err && (err as { status?: number }).status === 401) {
+      if (err instanceof ApiError && err.status === 401) {
         setError('Invalid token')
       } else {
         setError('Failed to connect to server')

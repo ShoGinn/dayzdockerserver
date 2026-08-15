@@ -8,7 +8,7 @@ plug-and-play from dayz.services.api.
 from __future__ import annotations
 
 from collections.abc import Callable
-from typing import cast
+from typing import Any, cast
 
 from fastapi import APIRouter, Depends, FastAPI, HTTPException, Request
 from fastapi.openapi.utils import get_openapi
@@ -132,7 +132,7 @@ def build_router(verify_token: Callable[..., bool]) -> APIRouter:
 def attach_openapi_filter(app: FastAPI) -> None:
     """Wrap app.openapi to hide VPP endpoints when VPP is not installed."""
 
-    def custom_openapi() -> dict:
+    def custom_openapi() -> dict[str, Any]:
         schema = get_openapi(
             title=app.title,
             version=app.version,
@@ -149,4 +149,4 @@ def attach_openapi_filter(app: FastAPI) -> None:
         return schema
 
     # Preserve potential previous wrappers by referencing original
-    app.openapi = custom_openapi  # type: ignore[method-assign]
+    app.openapi = custom_openapi  # ty: ignore[invalid-assignment]

@@ -5,7 +5,6 @@ Helpers to manage VPPAdminTools configuration files under the profiles directory
 
 from enum import StrEnum
 from pathlib import Path
-from typing import Any
 
 from pydantic import BaseModel, Field, field_validator
 
@@ -37,7 +36,7 @@ class VPPSuperAdminsRequest(BaseModel):
 
     @field_validator("mode", mode="before")
     @classmethod
-    def _coerce_mode(cls, v: Any) -> VPPMode:
+    def _coerce_mode(cls, v: object) -> VPPMode:
         if isinstance(v, str):
             v = v.strip().lower()
             try:

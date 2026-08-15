@@ -7,7 +7,7 @@ Handles workshop mod installation, activation, and command line building.
 import json
 import subprocess
 from collections.abc import Iterator
-from enum import Enum
+from enum import StrEnum
 from pathlib import Path
 
 from pydantic import BaseModel, Field, computed_field, field_validator
@@ -31,7 +31,7 @@ from dayz.utils.text_utils import build_workshop_url, extract_mod_name_from_meta
 # ========== Enums ==========
 
 
-class ModMode(str, Enum):
+class ModMode(StrEnum):
     """Mod mode types"""
 
     SERVER = "server"

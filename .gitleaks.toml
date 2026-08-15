@@ -1,0 +1,8 @@
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Allow the documented API token placeholder only in README.md"
+condition = "AND"
+paths = ['''^README\.md$''']
+regexes = ['''Authorization:\s*Bearer\s+YOUR_TOKEN''']

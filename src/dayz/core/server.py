@@ -14,6 +14,7 @@ from collections import defaultdict
 from datetime import datetime
 from functools import cached_property
 from pathlib import Path
+from typing import Any
 
 from dayz.config.models import ServerCommand, ServerConfig, ServerState, SupervisorState
 from dayz.config.paths import (
@@ -50,6 +51,22 @@ from dayz.utils.server_version import extract_dayz_version
 from dayz.utils.text_utils import extract_template_from_config, mask_password_in_config
 
 logger = logging.getLogger(__name__)
+MAX_LOG_TAIL_BYTES = 512 * 1024
+
+
+def resolve_profile_log_file(filename: str) -> Path:
+    """Resolve a user-selected log while confining it to the profiles volume."""
+    requested = Path(filename)
+    if not filename or requested.is_absolute():
+        raise ValueError("Log filename must be relative to the profiles directory")
+
+    profiles_root = PROFILES_DIR.resolve()
+    resolved = (profiles_root / requested).resolve(strict=False)
+    if not resolved.is_relative_to(profiles_root):
+        raise ValueError("Log filename escapes the profiles directory")
+    if resolved.exists() and not resolved.is_file():
+        raise ValueError("Log filename must identify a regular file")
+    return resolved
 
 
 class ServerControl:
@@ -211,7 +228,7 @@ class ServerManager:
         # Return defaults
         return ServerParams(), ParamSource.DEFAULT
 
-    def get_server_params_dict(self) -> dict:
+    def get_server_params_dict(self) -> dict[str, Any]:
         """Get server params as dictionary for API responses."""
         params, source = self.get_server_params_obj()
         return {
@@ -361,7 +378,7 @@ class ServerManager:
     # Status
     # =========================================================================
 
-    def get_status(self) -> dict:
+    def get_status(self) -> dict[str, Any]:
         """Get complete server status"""
         state = self.control.get_state()
 
@@ -381,7 +398,7 @@ class ServerManager:
             "active_mods": self._get_active_mods_info(state),
         }
 
-    def _get_active_mods_info(self, state: SupervisorState) -> list[dict]:
+    def _get_active_mods_info(self, state: SupervisorState) -> list[dict[str, Any]]:
         """Get active mods info if server is running"""
         if state.state != ServerState.RUNNING.value:
             return []
@@ -575,14 +592,14 @@ class ServerManager:
         return self.save_server_config(config)
 
     # Legacy methods for backward compatibility
-    def get_structured_config(self) -> tuple[bool, str, dict]:
+    def get_structured_config(self) -> tuple[bool, str, dict[str, Any]]:
         """Load structured config JSON (legacy interface)"""
         success, msg, config = self.get_server_config()
         if not success or config is None:
             return False, msg, {}
         return True, msg, config.model_dump(exclude={"immutable_keys"})
 
-    def save_structured_config(self, data: dict) -> tuple[bool, str]:
+    def save_structured_config(self, data: dict[str, Any]) -> tuple[bool, str]:
         """Save structured config JSON (legacy interface)"""
         try:
             config = ServerConfig(**data)
@@ -590,7 +607,7 @@ class ServerManager:
         except Exception as e:
             return False, f"Invalid config data: {e}"
 
-    def apply_structured_config(self, data: dict | None = None) -> tuple[bool, str]:
+    def apply_structured_config(self, data: dict[str, Any] | None = None) -> tuple[bool, str]:
         """Apply structured config (legacy interface)"""
         if data is None:
             return self.apply_server_config(None)
@@ -635,7 +652,7 @@ class ServerManager:
     # Storage Management
     # =========================================================================
 
-    def get_storage_info(self) -> dict:
+    def get_storage_info(self) -> dict[str, Any]:
         """Get information about storage directories"""
         map_name = self._get_map_name()
         mission_dir = MPMISSIONS_ACTIVE / map_name
@@ -688,7 +705,7 @@ class ServerManager:
             return "console"
         return "other"
 
-    def list_log_files(self) -> list[dict]:
+    def list_log_files(self) -> list[dict[str, Any]]:
         """List available log-like files in profiles, sorted by modified descending"""
         if not PROFILES_DIR.exists():
             return []
@@ -719,22 +736,24 @@ class ServerManager:
         self, filename: str | None = None, bytes_count: int = 20000
     ) -> tuple[bool, str, str]:
         """Read last N bytes from a log file. Default to config 'logFile'"""
-        path: Path | None = None
-
-        if filename:
-            path = PROFILES_DIR / filename if not filename.startswith("/") else Path(filename)
-        else:
+        if not 1 <= bytes_count <= MAX_LOG_TAIL_BYTES:
+            raise ValueError(f"bytes_count must be between 1 and {MAX_LOG_TAIL_BYTES}")
+        if filename is None:
             success, _, cfg = self.get_server_config()
             if success and cfg and getattr(cfg, "logFile", None):
-                path = PROFILES_DIR / cfg.logFile
+                filename = cfg.logFile
 
-        if not path or not path.is_file():
+        if not filename:
             return False, "Log file not found", ""
+
+        path = resolve_profile_log_file(filename)
 
         try:
             size = path.stat().st_size
-            start = max(0, size - max(0, bytes_count))
-            content = path.read_bytes()[start:].decode("utf-8", errors="replace")
+            start = max(0, size - bytes_count)
+            with path.open("rb") as log_file:
+                log_file.seek(start)
+                content = log_file.read(bytes_count).decode("utf-8", errors="replace")
             return True, f"Read {len(content)} bytes", content
         except Exception as e:
             return False, f"Failed to read log: {e}", ""
@@ -788,9 +807,9 @@ class ServerManager:
     # Server Files Cleanup
     # =========================================================================
 
-    def get_cleanup_info(self) -> dict:
+    def get_cleanup_info(self) -> dict[str, Any]:
         """Get information about files that can be cleaned up"""
-        cleanup_items: defaultdict[str, list] = defaultdict(list)
+        cleanup_items: defaultdict[str, list[dict[str, Any]]] = defaultdict(list)
         total_size = 0
 
         cleanup_dirs = [d for d in [SERVER_FILES, PROFILES_DIR] if d.exists()]

@@ -54,12 +54,10 @@ MANIFEST
 .tox/
 .hypothesis/
 htmlcov/
-.mypy_cache/
-.dmypy.json
-dmypy.json
 
 # Node
 node_modules/
+**/node_modules/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
@@ -68,6 +66,7 @@ lerna-debug.log*
 .npm
 .yarn/
 dist/
+**/dist/
 dist-ssr/
 *.local
 
