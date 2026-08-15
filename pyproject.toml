@@ -4,7 +4,7 @@ dependencies = [
     "pydantic>=2.12.5",
     "python-multipart>=0.0.31",
     "requests>=2.34.0",
-    "uvicorn[standard]>=0.38.0",
+    "uvicorn[standard]>=0.52.1",
 ]
 description = "DayZ Server Management API and Lifecycle Tools"
 name = "dayz-server"
