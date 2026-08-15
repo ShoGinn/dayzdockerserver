@@ -12,6 +12,7 @@ import shutil
 import subprocess
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Any
 
 from dayz.config.paths import FILES_DIR, MPMISSIONS_ACTIVE, MPMISSIONS_UPSTREAM, WORKSHOP_DIR
 
@@ -158,7 +159,7 @@ class MapManager:
     def __init__(self) -> None:
         self.maps_dir = FILES_DIR / "mods"
 
-    def list_available_maps(self) -> list[dict]:
+    def list_available_maps(self) -> list[dict[str, Any]]:
         """List all available maps (built-in + from map.env files)"""
         maps = []
 
@@ -183,9 +184,9 @@ class MapManager:
             if map_info and map_info.get("workshop_id") not in MAP_REGISTRY:
                 maps.append(map_info)
 
-        return sorted(maps, key=lambda m: m["name"])
+        return sorted(maps, key=lambda m: str(m["name"]))
 
-    def _parse_map_env(self, env_file: Path) -> dict | None:
+    def _parse_map_env(self, env_file: Path) -> dict[str, Any] | None:
         """Parse a map.env file"""
         try:
             content = env_file.read_text()
@@ -246,7 +247,7 @@ class MapManager:
                 return True
         return False
 
-    def get_map_info(self, workshop_id: str) -> dict | None:
+    def get_map_info(self, workshop_id: str) -> dict[str, Any] | None:
         """Get info for a specific map"""
         if workshop_id in MAP_REGISTRY:
             map_def = MAP_REGISTRY[workshop_id]
@@ -262,7 +263,7 @@ class MapManager:
             }
         return None
 
-    def get_map_by_template(self, template: str) -> dict | None:
+    def get_map_by_template(self, template: str) -> dict[str, Any] | None:
         """Get map info by mission template name (e.g. 'dayzOffline.enoch' -> Livonia)"""
         # Strip the dayzOffline. prefix if present
         template_key = template.replace("dayzOffline.", "")

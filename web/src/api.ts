@@ -75,7 +75,7 @@ export const api = {
   // Status
   getStatus: () => request<ServerStatus>('/status'),
   verifyToken: (token: string) =>
-    request<ServerStatus>('/status', {
+    request<{ authenticated: boolean }>('/auth/verify', {
       headers: { Authorization: `Bearer ${token}` },
     }),
 

@@ -6,7 +6,7 @@ Clean Pydantic-based approach for composing DayZ server parameters.
 
 from __future__ import annotations
 
-from enum import Enum
+from enum import StrEnum
 from pathlib import Path
 
 from pydantic import BaseModel, Field, field_validator
@@ -14,14 +14,14 @@ from pydantic import BaseModel, Field, field_validator
 from dayz.config.paths import BATTLEYE_DIR, PROFILES_DIR, SERVER_CFG, SERVER_PORT
 
 
-class LogMode(str, Enum):
+class LogMode(StrEnum):
     """Server logging mode."""
 
     ENABLED = "enabled"
     DISABLED = "disabled"
 
 
-class ParamSource(str, Enum):
+class ParamSource(StrEnum):
     """Source of server parameters."""
 
     DEFAULT = "default"

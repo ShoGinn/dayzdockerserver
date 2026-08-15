@@ -1,0 +1,134 @@
+.viewer {
+  display: flex;
+  flex-direction: column;
+  min-height: 400px;
+  background: #0b0d12;
+  color: #cfe3ff;
+}
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border-color);
+  background: var(--bg-tertiary);
+  flex-wrap: wrap;
+}
+
+.toolbar button,
+.searchInput {
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  font: inherit;
+  font-size: 12px;
+  padding: 5px 8px;
+}
+
+.toolbar button {
+  cursor: pointer;
+}
+
+.toolbar button:hover:not(:disabled),
+.toolbar button[aria-pressed="true"] {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.toolbar button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.searchLabel {
+  flex: 1;
+  min-width: 160px;
+}
+
+.searchInput {
+  width: 100%;
+}
+
+.searchInput:focus-visible,
+.toolbar button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.matchCount {
+  min-width: 44px;
+  color: var(--text-muted);
+  font: 12px var(--font-mono);
+  text-align: center;
+}
+
+.viewport {
+  flex: 1;
+  min-height: 400px;
+  max-height: calc(80vh - 200px);
+  overflow: auto;
+  font-family: var(--font-mono);
+  font-size: 13px;
+}
+
+.lines {
+  min-width: 100%;
+  width: max-content;
+}
+
+.line {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  min-height: 20px;
+  content-visibility: auto;
+  contain-intrinsic-size: auto 20px;
+}
+
+.activeLine {
+  background: rgb(73 134 255 / 18%);
+}
+
+.lineNumber {
+  position: sticky;
+  left: 0;
+  min-width: 52px;
+  padding: 1px 12px 1px 8px;
+  border-right: 1px solid rgb(255 255 255 / 8%);
+  background: #0b0d12;
+  color: #667085;
+  text-align: right;
+  user-select: none;
+}
+
+.lineContent {
+  padding: 1px 12px;
+  color: inherit;
+  font: inherit;
+}
+
+.wrapped {
+  width: 100%;
+}
+
+.wrapped .lineContent {
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
+.unwrapped .lineContent {
+  white-space: pre;
+}
+
+.lineContent mark {
+  background: #ffd166;
+  color: #151515;
+}
+
+@media (max-width: 768px) {
+  .viewer,
+  .viewport {
+    min-height: 300px;
+  }
+}

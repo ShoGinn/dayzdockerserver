@@ -178,6 +178,10 @@ export async function mockRequest<T>(endpoint: string, options: RequestInit = {}
   const method = (options.method ?? 'GET').toUpperCase()
   const path = endpoint.split('?')[0]
 
+  if (path === '/auth/verify' && method === 'GET') {
+    return { authenticated: true } as T
+  }
+
   // Status
   if (path === '/status' && method === 'GET') {
     return structuredClone(mockState.status) as T

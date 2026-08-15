@@ -13,13 +13,14 @@ Unified API for all server management operations:
 
 import logging
 import os
-from collections.abc import AsyncIterator
+from collections.abc import AsyncIterator, Awaitable, Callable
 from contextlib import asynccontextmanager
-from typing import cast
+from secrets import compare_digest
+from typing import Any, cast
 
 from fastapi import Depends, FastAPI, File, HTTPException, Query, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import StreamingResponse
+from fastapi.responses import JSONResponse, Response, StreamingResponse
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
 from dayz.config.models import (
@@ -34,10 +35,9 @@ from dayz.config.models import (
     SteamCachedConfigRequest,
     SteamLoginRequest,
 )
-from dayz.config.paths import PROFILES_DIR
 from dayz.core.maps import MapManager
 from dayz.core.mods import ModManager
-from dayz.core.server import ServerControl, ServerManager
+from dayz.core.server import MAX_LOG_TAIL_BYTES, ServerManager, resolve_profile_log_file
 from dayz.core.steam import CredentialsStatus, ImportResult, LoginTestResult, SteamCredentials
 from dayz.mods import router as mods_router
 from dayz.mods import vpp_api
@@ -48,7 +48,10 @@ from dayz.mods import vpp_api
 
 API_TOKEN = os.getenv("API_TOKEN", "")
 API_AUTH_DISABLED = os.getenv("API_AUTH_DISABLED", "").lower() in ("1", "true", "yes")
-CORS_ORIGINS = os.getenv("CORS_ORIGINS", "").split(",") if os.getenv("CORS_ORIGINS") else []
+CORS_ORIGINS = [
+    origin.strip() for origin in os.getenv("CORS_ORIGINS", "").split(",") if origin.strip()
+]
+INVALID_API_TOKENS = {"", "your-secret-token-here"}
 
 security = HTTPBearer(auto_error=False)
 
@@ -61,6 +64,7 @@ security = HTTPBearer(auto_error=False)
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     """Application startup/shutdown"""
+    validate_auth_configuration()
     # Startup
     logging.info("DayZ API starting...")
 
@@ -90,14 +94,14 @@ app = FastAPI(
 # FastAPI parameter sentinels (avoid function calls in defaults per linter)
 FILE_REQUIRED = File(...)
 
-# CORS for web UI
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=CORS_ORIGINS or ["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+if CORS_ORIGINS:
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=CORS_ORIGINS,
+        allow_credentials=True,
+        allow_methods=["DELETE", "GET", "OPTIONS", "POST", "PUT"],
+        allow_headers=["Authorization", "Content-Type"],
+    )
 
 
 # =============================================================================
@@ -105,17 +109,51 @@ app.add_middleware(
 # =============================================================================
 
 
+def validate_auth_configuration() -> None:
+    """Reject insecure production authentication configuration."""
+    if not API_AUTH_DISABLED and API_TOKEN in INVALID_API_TOKENS:
+        raise RuntimeError(
+            "API_TOKEN must be set to a non-placeholder value unless API_AUTH_DISABLED=true"
+        )
+
+
+def _token_is_valid(token: str | None) -> bool:
+    if API_AUTH_DISABLED:
+        return True
+    return bool(token) and compare_digest(token, API_TOKEN)
+
+
+def _bearer_token(authorization: str | None) -> str | None:
+    if not authorization:
+        return None
+    scheme, separator, token = authorization.partition(" ")
+    if not separator or scheme.lower() != "bearer":
+        return None
+    return token
+
+
 def verify_token(
     credentials: HTTPAuthorizationCredentials | None = Depends(security),  # noqa: B008
 ) -> bool:
     """Verify bearer token if authentication is enabled"""
-    if API_AUTH_DISABLED:
-        return True
-    if not API_TOKEN:
-        return True
-    if not credentials or credentials.credentials != API_TOKEN:
+    token = credentials.credentials if credentials else None
+    if not _token_is_valid(token):
         raise HTTPException(status_code=401, detail="Invalid or missing token")
     return True
+
+
+@app.middleware("http")
+async def require_api_authentication(
+    request: Request,
+    call_next: Callable[[Request], Awaitable[Response]],
+) -> Response:
+    """Fail closed for every API route except the health probe and CORS preflight."""
+    if request.url.path == "/health" or request.method == "OPTIONS":
+        return await call_next(request)
+    token = _bearer_token(request.headers.get("Authorization"))
+    if not _token_is_valid(token):
+        return JSONResponse(status_code=401, content={"detail": "Invalid or missing token"})
+    return await call_next(request)
 
 
 # Attach modular VPP API router and OpenAPI filter
@@ -147,13 +185,15 @@ app.include_router(router_mods)
 @app.get("/health", response_model=HealthResponse, tags=["Health"])
 async def health_check() -> HealthResponse:
     """Health check endpoint"""
-    control = ServerControl()
-    state = control.get_state()
-    return HealthResponse(
-        status="ok",
-        server_state=state.state,
-        message=state.message,
-    )
+    return HealthResponse(status="ok")
+
+
+@app.get("/auth/verify", tags=["Authentication"])
+async def verify_authentication(
+    _auth: bool = Depends(verify_token),  # noqa: B008
+) -> dict[str, bool]:
+    """Verify that the supplied bearer token is valid."""
+    return {"authenticated": True}
 
 
 @app.get("/status", response_model=ServerStatusResponse, tags=["Server"])
@@ -289,7 +329,9 @@ async def clear_server_params(
 
 
 @app.get("/server/channel", tags=["Server"])
-async def get_server_channel(server: ServerManager = Depends(get_server)) -> dict:  # noqa: B008
+async def get_server_channel(
+    server: ServerManager = Depends(get_server),  # noqa: B008
+) -> dict[str, Any]:
     """Get current app channel"""
     channel = server.get_channel()
     return {"success": True, "channel": channel}
@@ -409,19 +451,10 @@ async def uninstall_server(
 @app.get("/config", tags=["Config"])
 async def get_config(
     raw: bool = Query(False, description="Return unmasked secrets (requires auth)"),
+    _auth: bool = Depends(verify_token),  # noqa: B008
     server: ServerManager = Depends(get_server),  # noqa: B008
-    credentials: HTTPAuthorizationCredentials | None = Depends(security),  # noqa: B008
-) -> dict:
+) -> dict[str, Any]:
     """Get server configuration (raw cfg content)"""
-    # Require auth for raw config
-    if (
-        raw
-        and not API_AUTH_DISABLED
-        and API_TOKEN
-        and (not credentials or credentials.credentials != API_TOKEN)
-    ):
-        raise HTTPException(status_code=401, detail="Auth required for raw config")
-
     success, message, content = server.get_config(mask_secrets=not raw)
     if not success:
         raise HTTPException(status_code=404, detail=message)
@@ -446,7 +479,7 @@ async def update_config(
 async def get_structured_config(
     _auth: bool = Depends(verify_token),  # noqa: B008
     server: ServerManager = Depends(get_server),  # noqa: B008
-) -> dict:
+) -> dict[str, Any]:
     """Get structured configuration as JSON with field values"""
     success, message, config = server.get_server_config()
     if not success or config is None:
@@ -459,7 +492,7 @@ async def get_structured_config(
 
 @app.put("/config/structured", response_model=OperationResponse, tags=["Config"])
 async def update_structured_config(
-    payload: dict,
+    payload: dict[str, Any],
     _auth: bool = Depends(verify_token),  # noqa: B008
     server: ServerManager = Depends(get_server),  # noqa: B008
 ) -> OperationResponse:
@@ -478,7 +511,7 @@ async def update_structured_config(
 @app.get("/config/schema", tags=["Config"])
 async def get_config_schema(
     _auth: bool = Depends(verify_token),  # noqa: B008
-) -> dict:
+) -> dict[str, Any]:
     """Get config field metadata for UI (descriptions, sections, types)"""
     # Get field info from Pydantic model
     fields_info = {}
@@ -616,7 +649,7 @@ async def import_steam_cached_config_raw(
 @app.get("/maps", tags=["Maps"])
 async def list_maps(
     _auth: bool = Depends(verify_token),  # noqa: B008
-) -> dict:
+) -> dict[str, Any]:
     """List all available maps (official + community)"""
     from ..core.maps import MapManager
 
@@ -635,7 +668,7 @@ async def list_maps(
 async def get_map_info(
     workshop_id: str,
     _auth: bool = Depends(verify_token),  # noqa: B008
-) -> dict:
+) -> dict[str, Any]:
     """Get info for a specific map"""
     manager = MapManager()
     info = manager.get_map_info(workshop_id)
@@ -649,7 +682,7 @@ async def get_map_info(
 @app.get("/maps/template/{template}", tags=["Maps"])
 async def get_map_by_template(
     template: str,
-) -> dict:
+) -> dict[str, Any]:
     """Get map info by mission template name (e.g. 'dayzOffline.enoch' returns Livonia info)"""
     manager = MapManager()
     info = manager.get_map_by_template(template)
@@ -723,7 +756,7 @@ async def setup_mpmissions(
 async def get_storage_info(
     _auth: bool = Depends(verify_token),  # noqa: B008
     server: ServerManager = Depends(get_server),  # noqa: B008
-) -> dict:
+) -> dict[str, Any]:
     """Get information about player/world storage directories"""
     return {"success": True, **server.get_storage_info()}
 
@@ -756,7 +789,7 @@ async def wipe_storage(
 async def get_cleanup_info(
     _auth: bool = Depends(verify_token),  # noqa: B008
     server: ServerManager = Depends(get_server),  # noqa: B008
-) -> dict:
+) -> dict[str, Any]:
     """Get information about files that can be cleaned up in /serverfiles"""
     return {"success": True, **server.get_cleanup_info()}
 
@@ -791,7 +824,7 @@ async def cleanup_server_files(
 async def list_log_files(
     _auth: bool = Depends(verify_token),  # noqa: B008
     server: ServerManager = Depends(get_server),  # noqa: B008
-) -> dict:
+) -> dict[str, Any]:
     """List available log files in /profiles"""
     return {"success": True, "files": server.list_log_files()}
 
@@ -799,12 +832,15 @@ async def list_log_files(
 @app.get("/logs", tags=["Logs"])
 async def get_log_tail(
     filename: str | None = Query(None, description="Log file name (defaults to config logFile)"),
-    bytes_count: int = Query(20000, description="Tail N bytes"),
+    bytes_count: int = Query(20000, ge=1, le=MAX_LOG_TAIL_BYTES, description="Tail N bytes"),
     _auth: bool = Depends(verify_token),  # noqa: B008
     server: ServerManager = Depends(get_server),  # noqa: B008
-) -> dict:
+) -> dict[str, Any]:
     """Tail a log file."""
-    success, message, content = server.read_log_tail(filename, bytes_count)
+    try:
+        success, message, content = server.read_log_tail(filename, bytes_count)
+    except ValueError as error:
+        raise HTTPException(status_code=400, detail=str(error)) from error
     if not success:
         raise HTTPException(status_code=404, detail=message)
     return {"success": True, "message": message, "content": content}
@@ -819,17 +855,18 @@ async def stream_log(
     """Stream a log file via server-sent events (basic)."""
     import asyncio
     from datetime import datetime
-    from pathlib import Path
 
-    # Resolve path
-    path: Path | None = None
-    if filename:
-        path = PROFILES_DIR / filename if not filename.startswith("/") else Path(filename)
-    else:
+    if filename is None:
         success, _, cfg = server.get_server_config()
         if success and cfg is not None and getattr(cfg, "logFile", None):
-            path = PROFILES_DIR / cfg.logFile
-    if not path or not path.exists():
+            filename = cfg.logFile
+    if not filename:
+        raise HTTPException(status_code=404, detail="Log file not found")
+    try:
+        path = resolve_profile_log_file(filename)
+    except ValueError as error:
+        raise HTTPException(status_code=400, detail=str(error)) from error
+    if not path.is_file():
         raise HTTPException(status_code=404, detail="Log file not found")
 
     async def event_generator() -> AsyncIterator[str]:

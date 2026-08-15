@@ -6,7 +6,7 @@ Shared Pydantic models and dataclasses used across the application.
 
 from dataclasses import dataclass, field
 from datetime import datetime
-from enum import Enum
+from enum import StrEnum
 from pathlib import Path
 from typing import Any
 
@@ -17,7 +17,7 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 # =============================================================================
 
 
-class ServerState(str, Enum):
+class ServerState(StrEnum):
     """Server operational states (matches supervisor)"""
 
     STOPPED = "stopped"
@@ -29,7 +29,7 @@ class ServerState(str, Enum):
     MAINTENANCE = "maintenance"
 
 
-class ServerCommand(str, Enum):
+class ServerCommand(StrEnum):
     """Commands for the supervisor"""
 
     START = "start"
@@ -85,8 +85,6 @@ class HealthResponse(BaseModel):
     """Health check response"""
 
     status: str = "ok"
-    server_state: str
-    message: str = ""
 
 
 class ModResponse(BaseModel):
@@ -129,7 +127,7 @@ class OperationResponse(BaseModel):
 
     success: bool
     message: str
-    details: dict | None = None
+    details: dict[str, Any] | None = None
 
 
 class ServerParamsRequest(BaseModel):
@@ -158,7 +156,7 @@ class ServerParamsResponse(BaseModel):
     """Response containing current server parameters."""
 
     success: bool = True
-    params: dict  # ServerParams as dict
+    params: dict[str, Any]  # ServerParams as dict
     command_string: str
     source: str  # ParamSource value
 

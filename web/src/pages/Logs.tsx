@@ -1,9 +1,9 @@
-import { LazyLog, ScrollFollow } from '@melloware/react-logviewer'
 import { ChevronRight, FileText, Loader2, RefreshCw } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { api } from '../api'
 import { Button } from '../components/Button'
 import { Card } from '../components/Card'
+import { clampTailBytes, LogViewer, MAX_LOG_TAIL_BYTES } from '../components/LogViewer'
 import styles from './Logs.module.css'
 
 interface LogFile {
@@ -92,7 +92,7 @@ export function LogsPage() {
     if (!selected) return
     try {
       setLoadingContent(true)
-      const res = await api.getLogTail(selected, bytesCount)
+      const res = await api.getLogTail(selected, clampTailBytes(bytesCount))
       setContent(res.content)
       setError('')
     } catch (e) {
@@ -241,10 +241,12 @@ export function LogsPage() {
                   Tail bytes:
                   <input
                     type="number"
-                    min={1000}
+                    min={1}
                     step={1000}
+                    max={MAX_LOG_TAIL_BYTES}
                     value={bytesCount}
                     onChange={e => setBytesCount(Number(e.target.value))}
+                    onBlur={() => setBytesCount(current => clampTailBytes(current))}
                     className={styles.controlInput}
                   />
                 </label>
@@ -270,34 +272,7 @@ export function LogsPage() {
               <div className={styles.logContainer}>
                 {error && <div className={styles.error}>Error: {error}</div>}
                 {content ? (
-                  <ScrollFollow
-                    startFollowing={autoRefresh}
-                    render={({ follow, onScroll }) => (
-                      <LazyLog
-                        text={content}
-                        follow={follow}
-                        onScroll={onScroll}
-                        extraLines={1}
-                        enableSearch
-                        enableHotKeys
-                        selectableLines
-                        wrapLines
-                        enableLinks
-                        height="auto"
-                        style={{
-                          background: '#0b0d12',
-                          color: '#cfe3ff',
-                          fontFamily: 'var(--font-mono)',
-                          fontSize: '13px',
-                        }}
-                        containerStyle={{
-                          overflow: 'auto',
-                          maxHeight: 'calc(80vh - 200px)',
-                          minHeight: '400px',
-                        }}
-                      />
-                    )}
-                  />
+                  <LogViewer content={content} follow={autoRefresh} />
                 ) : !error ? (
                   <div className={styles.emptyState}>
                     {loadingContent ? (

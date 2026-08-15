@@ -12,7 +12,9 @@ import { SettingsPage } from './pages/Settings'
 import './styles/globals.css'
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated } = useAuth()
+  const { isAuthenticated, isVerifying } = useAuth()
+
+  if (isVerifying) return null
 
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />
@@ -22,7 +24,9 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 }
 
 function AppRoutes() {
-  const { isAuthenticated } = useAuth()
+  const { isAuthenticated, isVerifying } = useAuth()
+
+  if (isVerifying) return null
 
   return (
     <Routes>

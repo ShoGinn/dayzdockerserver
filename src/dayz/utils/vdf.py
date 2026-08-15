@@ -9,10 +9,10 @@ This implementation is intentionally lightweight and dependency-free.
 
 from __future__ import annotations
 
-from typing import Any
+type VDFValue = str | dict[str, "VDFValue"]
 
 
-def parse_kv(text: str) -> dict[str, Any]:
+def parse_kv(text: str) -> dict[str, VDFValue]:
     """Parse Valve KeyValues text into a nested dict.
 
     Supports:
@@ -61,12 +61,12 @@ def parse_kv(text: str) -> dict[str, Any]:
             i += 1
         raise ValueError("Unterminated string")
 
-    def read_value() -> Any:
+    def read_value() -> VDFValue:
         nonlocal i
         skip_ws_comments()
         if i < n and s[i] == "{":
             i += 1
-            obj: dict[str, Any] = {}
+            obj: dict[str, VDFValue] = {}
             while True:
                 skip_ws_comments()
                 if i >= n:
@@ -83,7 +83,7 @@ def parse_kv(text: str) -> dict[str, Any]:
         # Value as quoted string
         return read_string()
 
-    result: dict[str, Any] = {}
+    result: dict[str, VDFValue] = {}
     skip_ws_comments()
     while i < n:
         key = read_string()
@@ -94,7 +94,7 @@ def parse_kv(text: str) -> dict[str, Any]:
     return result
 
 
-def _find_accounts_block(node: dict[str, Any]) -> dict[str, Any] | None:
+def _find_accounts_block(node: dict[str, VDFValue]) -> dict[str, VDFValue] | None:
     """Depth-first search for an "Accounts" block anywhere in the tree."""
     if not isinstance(node, dict):
         return None
@@ -108,7 +108,7 @@ def _find_accounts_block(node: dict[str, Any]) -> dict[str, Any] | None:
     return None
 
 
-def find_first_account_name(kv: dict[str, Any]) -> str | None:
+def find_first_account_name(kv: dict[str, VDFValue]) -> str | None:
     """Find the first account name under the Accounts block.
 
     Expected layout:
