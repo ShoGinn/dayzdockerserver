@@ -27,6 +27,8 @@ updates:
           - "*"
   - package-ecosystem: docker
     directory: /
+    registries:
+      - docker-hardened
     schedule:
       interval: weekly
       day: wednesday
