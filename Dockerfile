@@ -103,7 +103,7 @@ ENTRYPOINT ["/usr/bin/tini", "--"]
 CMD ["python3", "-m", "dayz.services.supervisor"]
 LABEL org.opencontainers.image.title="DayZ Server"
 
-FROM dhi.io/nginx:1.30-alpine AS web
+FROM dhi.io/nginx:1.31-alpine AS web
 COPY --from=web-build /web/dist /usr/share/nginx/html
 COPY web/nginx-main.conf /etc/nginx/nginx.conf
 COPY web/nginx.conf /etc/nginx/conf.d/default.conf
