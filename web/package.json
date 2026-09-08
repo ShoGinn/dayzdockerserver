@@ -15,7 +15,7 @@
     "lint:check": "biome check ."
   },
   "dependencies": {
-    "lucide-react": "^1.40.0",
+    "lucide-react": "^1.41.0",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
     "react-router-dom": "^7.18.3"
@@ -33,6 +33,6 @@
     "jsdom": "30.0.1",
     "typescript": "^7.0.2",
     "vite": "^8.2.2",
-    "vitest": "4.1.11"
+    "vitest": "5.0.0"
   }
 }
